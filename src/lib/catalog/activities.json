@@ -1,0 +1,971 @@
+[
+  {
+    "id": "box-breathing",
+    "title": "Box Breathing",
+    "type": "breathing",
+    "duration_minutes": 2,
+    "mood_fit": {
+      "Stressed": 3,
+      "Anxious": 2,
+      "Overwhelmed": 1
+    },
+    "target_themes": [
+      "general",
+      "work",
+      "academics"
+    ],
+    "description": "Equal-duration breathing in four gentle counts to restore calm and balance your nervous system.",
+    "steps": [
+      "Gently exhale all air from your lungs.",
+      "Breathe in slowly through your nose for 4 counts.",
+      "Hold your breath gently for 4 counts without straining.",
+      "Slowly exhale through your mouth for 4 counts.",
+      "Hold empty for 4 counts, then repeat softly."
+    ],
+    "quick": true,
+    "relief": "calm"
+  },
+  {
+    "id": "4-7-8-breathing",
+    "title": "4-7-8 Breathing",
+    "type": "breathing",
+    "duration_minutes": 2,
+    "mood_fit": {
+      "Anxious": 3,
+      "Stressed": 1,
+      "Sad": 1
+    },
+    "target_themes": [
+      "sleep",
+      "general"
+    ],
+    "description": "An extended exhale practice that signals safety to your body and helps quiet a racing mind.",
+    "steps": [
+      "Settle into a comfortable, relaxed posture.",
+      "Inhale quietly through your nose for a count of 4.",
+      "Gently hold your breath for a count of 7.",
+      "Exhale completely and audibly through your mouth for a count of 8.",
+      "Repeat this gentle cycle 3 to 4 times."
+    ],
+    "quick": true,
+    "relief": "calm"
+  },
+  {
+    "id": "physiological-sigh",
+    "title": "Physiological Sigh",
+    "type": "breathing",
+    "duration_minutes": 1,
+    "mood_fit": {
+      "Stressed": 3,
+      "Anxious": 2,
+      "Okay": 1
+    },
+    "target_themes": [
+      "work",
+      "academics",
+      "general"
+    ],
+    "description": "A double inhale followed by a long, relaxed sigh to rapidly reset tension.",
+    "steps": [
+      "Take a deep, full breath in through your nose.",
+      "At the very top, take a second quick sharp inhale to fully fill your lungs.",
+      "Release with a long, slow, vocalized or soft sigh through your mouth.",
+      "Repeat 2 to 3 times whenever you feel immediate tightness."
+    ],
+    "quick": true,
+    "relief": "calm"
+  },
+  {
+    "id": "5-4-3-2-1-grounding",
+    "title": "5-4-3-2-1 Grounding",
+    "type": "grounding",
+    "duration_minutes": 3,
+    "mood_fit": {
+      "Anxious": 3,
+      "Overwhelmed": 1,
+      "Stressed": 1
+    },
+    "target_themes": [
+      "general",
+      "health_worry"
+    ],
+    "description": "Gently anchor your awareness in your immediate surroundings using your physical senses.",
+    "steps": [
+      "Acknowledge 5 things you can see around you right now.",
+      "Notice 4 things you can physically touch or feel (like your clothes or the chair).",
+      "Listen for 3 distinct sounds in your environment.",
+      "Notice 2 things you can smell (or two scents you enjoy).",
+      "Notice 1 thing you can taste or take a mindful sip of water."
+    ],
+    "quick": false,
+    "relief": "calm"
+  },
+  {
+    "id": "body-scan",
+    "title": "Body Scan",
+    "type": "grounding",
+    "duration_minutes": 3,
+    "mood_fit": {
+      "Stressed": 2,
+      "Sad": 2,
+      "Okay": 1
+    },
+    "target_themes": [
+      "sleep",
+      "health_worry",
+      "general"
+    ],
+    "description": "A gentle check-in from head to toe to notice and soften areas holding unnoticed tension.",
+    "steps": [
+      "Rest your feet flat and let your hands soften in your lap.",
+      "Bring gentle attention to your face and jaw; let your teeth separate slightly.",
+      "Drop your shoulders away from your ears and let your chest soften.",
+      "Notice your stomach, hips, and legs, inviting each part to relax.",
+      "Take one deep breath appreciating your body just as it is right now."
+    ],
+    "quick": false,
+    "relief": "calm"
+  },
+  {
+    "id": "release-unclench",
+    "title": "Release & Unclench",
+    "type": "grounding",
+    "duration_minutes": 2,
+    "mood_fit": {
+      "Stressed": 3,
+      "Anxious": 1,
+      "Overwhelmed": 1
+    },
+    "target_themes": [
+      "work",
+      "health_worry",
+      "general"
+    ],
+    "description": "Intentionally notice and relax the common spots where everyday stress quietly gathers.",
+    "steps": [
+      "Notice if your tongue is pressed to the roof of your mouth; let it drop.",
+      "Check your forehead and eyebrows; smooth them out.",
+      "Unclench your hands and let your fingers curl naturally.",
+      "Release your stomach muscles and take a gentle, unrestricted breath.",
+      "Enjoy the subtle feeling of space and lightness."
+    ],
+    "quick": true,
+    "relief": "calm"
+  },
+  {
+    "id": "brain-dump",
+    "title": "Brain Dump",
+    "type": "journaling",
+    "duration_minutes": 3,
+    "mood_fit": {
+      "Overwhelmed": 3,
+      "Stressed": 2,
+      "Anxious": 1
+    },
+    "target_themes": [
+      "academics",
+      "work",
+      "general"
+    ],
+    "description": "Empty your mental clutter onto the page without worrying about neatness, order, or grammar.",
+    "steps": [
+      "Open a blank space or paper.",
+      "Write down everything swirling in your mind: tasks, worries, random thoughts.",
+      "Keep typing or writing continuously for two minutes without editing.",
+      "Acknowledge that your thoughts are now safe outside of your head."
+    ],
+    "quick": false,
+    "relief": "calm"
+  },
+  {
+    "id": "one-small-step",
+    "title": "One Small Next Step",
+    "type": "journaling",
+    "duration_minutes": 2,
+    "mood_fit": {
+      "Overwhelmed": 2,
+      "Sad": 1,
+      "Stressed": 1
+    },
+    "target_themes": [
+      "work",
+      "money"
+    ],
+    "description": "When everything feels big, narrow your focus down to just one tiny, manageable action.",
+    "steps": [
+      "Think about what is currently feeling heavy or stuck.",
+      "Ask yourself: 'What is the absolute smallest next step I can take in under 5 minutes?'",
+      "Write that single micro-step down clearly.",
+      "Give yourself permission to ignore everything else until that one step is done."
+    ],
+    "quick": true,
+    "relief": "calm"
+  },
+  {
+    "id": "gratitude-moment",
+    "title": "Gratitude Moment",
+    "type": "journaling",
+    "duration_minutes": 2,
+    "mood_fit": {
+      "Okay": 3,
+      "Sad": 2,
+      "Anxious": 1
+    },
+    "target_themes": [
+      "relationships",
+      "loneliness",
+      "general"
+    ],
+    "description": "Shift your focus to a small comfort, kindness, or steady presence in your day.",
+    "steps": [
+      "Think of 2 or 3 tiny things that brought a moment of ease today (e.g., warm tea, fresh air, a kind word).",
+      "Write them down and note why each felt pleasant.",
+      "Pause for 30 seconds to genuinely savor the warmth of those moments."
+    ],
+    "quick": true,
+    "relief": "lift"
+  },
+  {
+    "id": "name-what-you-feel",
+    "title": "Name What You Feel",
+    "type": "journaling",
+    "duration_minutes": 2,
+    "mood_fit": {
+      "Sad": 3,
+      "Anxious": 1,
+      "Overwhelmed": 1
+    },
+    "target_themes": [
+      "relationships",
+      "general"
+    ],
+    "description": "Give compassionate language to your current emotional state to reduce its intensity.",
+    "steps": [
+      "Take a slow breath and ask yourself with kindness: 'What am I feeling right now?'",
+      "Put words to the emotion without judging yourself for having it.",
+      "Write a short supportive sentence, such as: 'It is understandable that I feel this way right now.'",
+      "Offer yourself patience as you navigate this moment."
+    ],
+    "quick": true,
+    "relief": "calm"
+  },
+  {
+    "id": "screen-movement-break",
+    "title": "Screen/Movement Break",
+    "type": "break",
+    "duration_minutes": 5,
+    "mood_fit": {
+      "Stressed": 2,
+      "Overwhelmed": 2,
+      "Okay": 1
+    },
+    "target_themes": [
+      "work",
+      "academics",
+      "health_worry"
+    ],
+    "description": "Step away from your display, stretch your limbs, and give your eyes and mind a physical change of scenery.",
+    "steps": [
+      "Push back your chair and step away from all screens.",
+      "Look out a window or gaze at something at least 20 feet away for 20 seconds.",
+      "Roll your shoulders backward 5 times and gently stretch your arms overhead.",
+      "Walk a short loop around your room or drink a glass of fresh water.",
+      "Return feeling slightly recharged and refreshed."
+    ],
+    "quick": false,
+    "relief": "both"
+  },
+  {
+    "id": "break-it-into-one-small-step",
+    "title": "Break It Into One Small Step",
+    "type": "journaling",
+    "duration_minutes": 3,
+    "mood_fit": {
+      "Overwhelmed": 2,
+      "Anxious": 2,
+      "Stressed": 1
+    },
+    "target_themes": [
+      "academics",
+      "work",
+      "teamwork"
+    ],
+    "description": "When an assignment, study goal, or work project feels massive, slice it down to a single 2-minute starter action.",
+    "steps": [
+      "Write down the specific academic or work task that feels daunting right now.",
+      "Ask yourself: 'What is the absolute smallest physical action I can take in under two minutes?' (e.g. open the document, read one paragraph).",
+      "Commit to doing just that one micro-step without worrying about finishing the whole project.",
+      "Acknowledge that starting is the hardest part, and one step creates forward momentum."
+    ],
+    "quick": false,
+    "relief": "calm"
+  },
+  {
+    "id": "25-minute-focus-sprint",
+    "title": "25-Minute Focus Sprint",
+    "type": "break",
+    "duration_minutes": 25,
+    "mood_fit": {
+      "Overwhelmed": 3,
+      "Anxious": 1,
+      "Stressed": 1
+    },
+    "target_themes": [
+      "academics",
+      "work",
+      "teamwork"
+    ],
+    "description": "A structured, distraction-free focus interval to help you make tangible progress on your study or work task.",
+    "steps": [
+      "Choose one clear assignment or work task to focus on exclusively.",
+      "Silence all non-essential phone and browser notifications.",
+      "Work steadily with gentle focus for 25 minutes until the timer concludes.",
+      "When finished, step away from your desk for a well-deserved 5-minute pause."
+    ],
+    "quick": false,
+    "relief": "calm"
+  },
+  {
+    "id": "name-worry-park-it",
+    "title": "Name the Worry, Then Park It",
+    "type": "journaling",
+    "duration_minutes": 5,
+    "mood_fit": {
+      "Anxious": 3,
+      "Overwhelmed": 2,
+      "Stressed": 1
+    },
+    "target_themes": [
+      "general",
+      "health_worry",
+      "money",
+      "academics",
+      "conflict"
+    ],
+    "description": "A structured 5-minute worry time-box: acknowledge what is troubling you, write it down, and consciously park it for later.",
+    "steps": [
+      "Set a mental boundary: you have 5 minutes to acknowledge your worries without judging them.",
+      "Write down the specific worry currently taking up mental bandwidth.",
+      "Categorize it: is this something you have control over right now, or is it out of your hands?",
+      "If within control, write one future action step; if outside your control, draw a box around it to 'park' it for today.",
+      "Take one deep breath and transition your focus back to the present moment."
+    ],
+    "quick": false,
+    "relief": "calm"
+  },
+  {
+    "id": "reach-out-to-one-person",
+    "title": "Reach Out to One Person",
+    "type": "break",
+    "duration_minutes": 3,
+    "mood_fit": {
+      "Sad": 3,
+      "Okay": 1,
+      "Anxious": 1
+    },
+    "target_themes": [
+      "loneliness",
+      "relationships",
+      "teamwork",
+      "general"
+    ],
+    "description": "A simple, low-pressure prompt to send one supportive text or check-in message to someone in your life.",
+    "steps": [
+      "Think of one friend, family member, classmate, or colleague you feel comfortable with.",
+      "Draft a short, zero-pressure message (e.g. 'Thinking of you, hope your day is going well!' or a friendly emoji).",
+      "Hit send without waiting anxiously for an immediate response.",
+      "Notice the subtle shift that comes from extending a small connection outward."
+    ],
+    "quick": false,
+    "relief": "lift"
+  },
+  {
+    "id": "sleep-wind-down",
+    "title": "Sleep Wind-Down",
+    "type": "breathing",
+    "duration_minutes": 4,
+    "mood_fit": {
+      "Anxious": 2,
+      "Stressed": 2,
+      "Sad": 1
+    },
+    "target_themes": [
+      "sleep"
+    ],
+    "description": "A progressive slowing breath pattern and body relaxing ritual designed to prepare your mind for restful sleep.",
+    "steps": [
+      "Dim your lights and settle into a comfortable lying or reclining position.",
+      "Place one hand on your stomach and breathe in slowly for 4 counts, feeling your belly gently rise.",
+      "Exhale smoothly through your mouth for 6 counts, allowing your shoulders and jaw to sink into the bed.",
+      "Notice any lingering thoughts from the day and visualize setting them aside on a bedside table until tomorrow.",
+      "Continue this gentle rhythm until your breathing feels natural, heavy, and calm."
+    ],
+    "quick": false,
+    "relief": "calm"
+  },
+  {
+    "id": "self-kindness-pause",
+    "title": "Self-Kindness Pause",
+    "type": "journaling",
+    "duration_minutes": 3,
+    "mood_fit": {
+      "Sad": 3,
+      "Overwhelmed": 1,
+      "Anxious": 1
+    },
+    "target_themes": [
+      "general",
+      "relationships",
+      "academics",
+      "conflict"
+    ],
+    "description": "A gentle reframing exercise (practical wellbeing reflection, explicitly not therapy) to replace harsh self-criticism with supportive patience.",
+    "steps": [
+      "Notice if your internal voice has been harsh, frustrated, or demanding today.",
+      "Ask yourself: 'What would a patient, supportive friend say to me right now about this situation?'",
+      "Write down that kinder perspective in one or two clear sentences.",
+      "Remind yourself that doing your best with today's energy is entirely enough."
+    ],
+    "quick": false,
+    "relief": "lift"
+  },
+  {
+    "id": "small-comfort-act",
+    "title": "Small Comfort Act",
+    "type": "break",
+    "duration_minutes": 3,
+    "mood_fit": {
+      "Sad": 3,
+      "Overwhelmed": 1,
+      "Okay": 1
+    },
+    "target_themes": [
+      "general",
+      "loneliness"
+    ],
+    "description": "Do one small, nurturing physical thing to bring a tiny spark of warmth or relief to your space.",
+    "steps": [
+      "Ask yourself: 'What is one tiny physical comfort I could give myself right now?' (e.g. wrap in a blanket, warm tea, splash face).",
+      "Spend two minutes preparing or doing that one small comforting act.",
+      "Pause for a moment and allow yourself to receive that comfort without guilt.",
+      "Take one deep breath and acknowledge that you deserve kindness today."
+    ],
+    "quick": false,
+    "relief": "lift"
+  },
+  {
+    "id": "savour-the-moment",
+    "title": "Savour the Moment",
+    "type": "grounding",
+    "duration_minutes": 3,
+    "mood_fit": {
+      "Okay": 3,
+      "Sad": 1
+    },
+    "target_themes": [
+      "general"
+    ],
+    "description": "Notice what is feeling steady or pleasant right now and intentionally prolong that positive feeling.",
+    "steps": [
+      "Identify one pleasant or neutral physical sensation right now (e.g. comfortable seat, warm drink, steady breath).",
+      "Direct your full, unhurried attention toward this sensation for 60 seconds.",
+      "Notice how your mind and body respond when you intentionally savor ease.",
+      "Anchor this feeling with a gentle, appreciative breath."
+    ],
+    "quick": false,
+    "relief": "lift"
+  },
+  {
+    "id": "set-one-intention",
+    "title": "Set One Intention",
+    "type": "journaling",
+    "duration_minutes": 2,
+    "mood_fit": {
+      "Okay": 3,
+      "Stressed": 1,
+      "Overwhelmed": 1
+    },
+    "target_themes": [
+      "work",
+      "academics",
+      "general"
+    ],
+    "description": "Anchor your calm or steady energy by choosing one mindful, purposeful intention for the hours ahead.",
+    "steps": [
+      "Reflect on how you want to carry yourself through the rest of the day.",
+      "Choose a single anchor word or intention (e.g., 'patience', 'focus', 'gentleness', 'boundaries').",
+      "Write down that one word and one way you will embody it today.",
+      "Keep this intention quietly in mind as you resume your activities."
+    ],
+    "quick": true,
+    "relief": "both"
+  },
+  {
+    "id": "brain-dump-pick-one",
+    "title": "Brain Dump + Pick One",
+    "type": "journaling",
+    "duration_minutes": 4,
+    "mood_fit": {
+      "Overwhelmed": 3,
+      "Stressed": 1,
+      "Okay": 2
+    },
+    "target_themes": [
+      "work",
+      "academics",
+      "general"
+    ],
+    "description": "When multiple tasks compete for attention, list them all rapidly and choose exactly one to address.",
+    "steps": [
+      "Rapidly list every task, email, or worry currently cluttering your head without editing.",
+      "Read through the list once and draw a circle around the single highest-leverage item.",
+      "Give yourself explicit permission to ignore every other item on the page for now.",
+      "Take a deep breath knowing that tackling one priority is the antidote to paralysis."
+    ],
+    "quick": false,
+    "relief": "calm",
+    "target_moods": [
+      "Overwhelmed",
+      "Stressed",
+      "Okay"
+    ]
+  },
+  {
+    "id": "shoulder-release-stretch",
+    "title": "Shoulder Release Stretch",
+    "type": "break",
+    "duration_minutes": 3,
+    "mood_fit": {
+      "Stressed": 3,
+      "Overwhelmed": 1,
+      "Anxious": 1
+    },
+    "target_themes": [
+      "work",
+      "general",
+      "health_worry"
+    ],
+    "description": "Release physical tightness accumulated in your neck, shoulders, and upper back from daily stress.",
+    "steps": [
+      "Sit upright and gently shrug your shoulders up to your ears on an inhale.",
+      "Hold for 3 seconds, then exhale and drop your shoulders completely.",
+      "Roll your shoulders backwards in slow, wide circles 5 times.",
+      "Gently tilt your right ear toward your right shoulder for 15 seconds, then repeat on the left.",
+      "Notice the newfound sense of space and release around your neck."
+    ],
+    "quick": false,
+    "relief": "calm"
+  },
+  {
+    "id": "name-one-good-thing",
+    "title": "Name One Good Thing",
+    "type": "journaling",
+    "duration_minutes": 1,
+    "quick": true,
+    "relief": "lift",
+    "mood_fit": {
+      "Sad": 3,
+      "Okay": 2,
+      "Anxious": 1
+    },
+    "target_themes": [
+      "general",
+      "loneliness"
+    ],
+    "description": "Take sixty seconds to name one small thing that is good, comfortable, or comforting right now.",
+    "steps": [
+      "Pause and look around or scan your memory for one tiny positive detail.",
+      "Name it softly or write it down on paper.",
+      "Let the simple goodness of that one thing sink in for thirty seconds."
+    ],
+    "target_moods": [
+      "Sad",
+      "Okay",
+      "Anxious"
+    ]
+  },
+  {
+    "id": "stand-and-stretch-60-seconds",
+    "title": "Stand and Stretch 60 Seconds",
+    "type": "break",
+    "duration_minutes": 1,
+    "quick": true,
+    "relief": "both",
+    "mood_fit": {
+      "Stressed": 2,
+      "Sad": 2,
+      "Okay": 2
+    },
+    "target_themes": [
+      "general",
+      "work",
+      "academics"
+    ],
+    "description": "Stand up, raise your arms high, and take a long stretch to wake up your body and clear physical fatigue.",
+    "steps": [
+      "Stand up tall away from your seat.",
+      "Interlace your fingers and reach gently toward the ceiling.",
+      "Take one deep inhale, exhale, roll your shoulders down, and sit back down feeling slightly taller."
+    ],
+    "target_moods": [
+      "Stressed",
+      "Sad",
+      "Okay"
+    ]
+  },
+  {
+    "id": "music-reset",
+    "title": "Music Reset",
+    "type": "break",
+    "duration_minutes": 2,
+    "quick": true,
+    "relief": "lift",
+    "mood_fit": {
+      "Sad": 3,
+      "Okay": 2,
+      "Overwhelmed": 1
+    },
+    "target_themes": [
+      "general",
+      "loneliness"
+    ],
+    "description": "Play one uplifting or soothing song to shift your energy and reset your emotional state.",
+    "steps": [
+      "Put on headphones or turn on a favorite, comforting track.",
+      "Close your eyes and listen purely to the rhythm and melody for two minutes.",
+      "Notice how your heartbeat and energy shift with the music."
+    ],
+    "target_moods": [
+      "Sad",
+      "Okay",
+      "Overwhelmed"
+    ]
+  },
+  {
+    "id": "message-one-friend",
+    "title": "Message One Friend",
+    "type": "break",
+    "duration_minutes": 2,
+    "quick": true,
+    "relief": "lift",
+    "mood_fit": {
+      "Sad": 3,
+      "Okay": 2,
+      "Anxious": 1
+    },
+    "target_themes": [
+      "loneliness",
+      "relationships",
+      "general"
+    ],
+    "description": "Send a quick, low-effort emoji or hello to one friend to feel connected and less isolated.",
+    "steps": [
+      "Pick one person you feel comfortable with.",
+      "Send a short greeting, funny meme, or warm emoji without expecting an instant reply.",
+      "Enjoy the warm spark of reaching outward."
+    ],
+    "target_moods": [
+      "Sad",
+      "Okay",
+      "Anxious"
+    ]
+  },
+  {
+    "id": "splash-and-reset",
+    "title": "Splash and Reset",
+    "type": "grounding",
+    "duration_minutes": 1,
+    "quick": true,
+    "relief": "both",
+    "mood_fit": {
+      "Overwhelmed": 3,
+      "Stressed": 2,
+      "Sad": 2
+    },
+    "target_themes": [
+      "general",
+      "work",
+      "academics"
+    ],
+    "description": "Splash cool water on your face or wrists to activate your dive reflex and quickly calm physical agitation.",
+    "steps": [
+      "Walk to the sink and run cool tap water over your wrists.",
+      "Gently splash cool water onto your face and temples.",
+      "Pat dry with a soft towel and take one clear, fresh breath."
+    ],
+    "target_moods": [
+      "Overwhelmed",
+      "Stressed",
+      "Sad"
+    ]
+  },
+  {
+    "id": "pick-one-thing-matters",
+    "title": "Pick the One Thing That Matters",
+    "type": "journaling",
+    "duration_minutes": 3,
+    "quick": false,
+    "relief": "calm",
+    "mood_fit": {
+      "Overwhelmed": 3,
+      "Stressed": 2,
+      "Okay": 2
+    },
+    "target_themes": [
+      "general",
+      "work",
+      "academics"
+    ],
+    "description": "When everything feels demanding, identify the single thing that truly matters today.",
+    "steps": [
+      "Look at everything currently on your mind.",
+      "Ask yourself: If I could only finish one thing today, which would give me the most peace?",
+      "Circle that one task and set everything else aside for tomorrow."
+    ],
+    "target_moods": [
+      "Overwhelmed",
+      "Stressed",
+      "Okay"
+    ]
+  },
+  {
+    "id": "write-it-down-park-it",
+    "title": "Write It Down, Then Park It",
+    "type": "journaling",
+    "duration_minutes": 4,
+    "quick": false,
+    "relief": "calm",
+    "mood_fit": {
+      "Anxious": 3,
+      "Overwhelmed": 2,
+      "Stressed": 1
+    },
+    "target_themes": [
+      "general"
+    ],
+    "description": "Put swirling thoughts and worries onto paper, draw a box around them, and park them for later.",
+    "steps": [
+      "Write down the specific thoughts spinning in your mind without censoring yourself.",
+      "Draw a neat box around the list to contain it on the page.",
+      "Tell yourself: This is recorded safely; I do not need to hold it in my head right now."
+    ],
+    "target_moods": [
+      "Anxious",
+      "Overwhelmed",
+      "Stressed"
+    ]
+  },
+  {
+    "id": "decide-next-20-minutes",
+    "title": "Decide the Next 20 Minutes",
+    "type": "journaling",
+    "duration_minutes": 3,
+    "quick": false,
+    "relief": "calm",
+    "mood_fit": {
+      "Overwhelmed": 3,
+      "Anxious": 2,
+      "Stressed": 2
+    },
+    "target_themes": [
+      "general",
+      "work",
+      "academics"
+    ],
+    "description": "Narrow your focus to only the next twenty minutes to break through mental freeze.",
+    "steps": [
+      "Ignore the rest of the day and ask: What is one simple thing I can do in the next 20 minutes?",
+      "Write down that single step (e.g. read one section, clear one drawer).",
+      "Set a 20-minute timer and begin gently without rushing."
+    ],
+    "target_moods": [
+      "Overwhelmed",
+      "Anxious",
+      "Stressed"
+    ]
+  },
+  {
+    "id": "write-the-unsent-message",
+    "title": "Write the Unsent Message",
+    "type": "journaling",
+    "duration_minutes": 5,
+    "quick": false,
+    "relief": "calm",
+    "mood_fit": {
+      "Stressed": 3,
+      "Anxious": 2,
+      "Overwhelmed": 1
+    },
+    "target_themes": [
+      "conflict",
+      "teamwork",
+      "relationships",
+      "work"
+    ],
+    "description": "Vent in writing without sending it, allowing your emotions to clear before deciding how to respond.",
+    "steps": [
+      "Open a private, offline blank note or grab a piece of paper.",
+      "Write out everything you are feeling, thinking, and wishing you could say without filtering.",
+      "Review what you wrote and remind yourself this is private venting, not something to send.",
+      "If this involves unfair workloads or conflict, remember talking to a supervisor or teacher is also an option."
+    ],
+    "target_moods": [
+      "Stressed",
+      "Anxious",
+      "Overwhelmed"
+    ]
+  },
+  {
+    "id": "list-who-owns-what",
+    "title": "List Who Owns What",
+    "type": "journaling",
+    "duration_minutes": 5,
+    "quick": false,
+    "relief": "calm",
+    "mood_fit": {
+      "Stressed": 3,
+      "Overwhelmed": 3,
+      "Anxious": 1
+    },
+    "target_themes": [
+      "teamwork",
+      "work",
+      "academics"
+    ],
+    "description": "Map out all shared deliverables, who owns each item, and clearly highlight unowned tasks.",
+    "steps": [
+      "List all deliverables or sections required for this project or goal.",
+      "Assign names beside each item based on what was agreed upon.",
+      "Highlight any unassigned tasks in a separate column so gaps are factual and visible.",
+      "If teammates remain unresponsive, sharing this neutral list with an instructor or manager is a healthy option."
+    ],
+    "target_moods": [
+      "Stressed",
+      "Overwhelmed",
+      "Anxious"
+    ]
+  },
+  {
+    "id": "draft-one-clear-ask",
+    "title": "Draft One Clear Ask",
+    "type": "journaling",
+    "duration_minutes": 5,
+    "quick": false,
+    "relief": "calm",
+    "mood_fit": {
+      "Stressed": 3,
+      "Anxious": 2,
+      "Overwhelmed": 1
+    },
+    "target_themes": [
+      "teamwork",
+      "work",
+      "conflict",
+      "academics"
+    ],
+    "description": "Draft one specific, respectful request with a clear deadline using the format I need X by Y.",
+    "steps": [
+      "Identify the single deliverable you need from the other person right now.",
+      "Draft a clear, polite sentence: I need [specific task] completed by [day and time] so we can submit on time.",
+      "Read it over to ensure the tone is factual and constructive rather than confrontational.",
+      "Keep in mind that if collaboration breaks down, seeking guidance from a teacher or lead is also an option."
+    ],
+    "target_moods": [
+      "Stressed",
+      "Anxious",
+      "Overwhelmed"
+    ]
+  },
+  {
+    "id": "pick-conversation-moment",
+    "title": "Pick Your Conversation Moment",
+    "type": "journaling",
+    "duration_minutes": 3,
+    "quick": false,
+    "relief": "calm",
+    "mood_fit": {
+      "Anxious": 3,
+      "Stressed": 2,
+      "Overwhelmed": 1
+    },
+    "target_themes": [
+      "conflict",
+      "relationships",
+      "teamwork",
+      "work"
+    ],
+    "description": "Choose an unhurried time and calm setting for a sensitive conversation, plus one neutral opening sentence.",
+    "steps": [
+      "Choose a time when neither of you is in a rush or already exhausted.",
+      "Decide whether a quick private voice call, in-person chat, or calm note is best.",
+      "Write down one neutral opening sentence (e.g. I want to make sure we are on the same page about our deadline.).",
+      "Remember you can always invite a neutral supervisor, teacher, or trusted third party to facilitate."
+    ],
+    "target_moods": [
+      "Anxious",
+      "Stressed",
+      "Overwhelmed"
+    ]
+  },
+  {
+    "id": "separate-facts-feelings",
+    "title": "Separate Facts from Feelings",
+    "type": "journaling",
+    "duration_minutes": 4,
+    "quick": false,
+    "relief": "calm",
+    "mood_fit": {
+      "Anxious": 3,
+      "Stressed": 2,
+      "Sad": 1
+    },
+    "target_themes": [
+      "conflict",
+      "relationships",
+      "work",
+      "general"
+    ],
+    "description": "Create two columns to distinguish the observable facts of what happened from the emotions and stories around it.",
+    "steps": [
+      "Draw a line down the center of a page: label the left Observable Facts and the right How I Felt.",
+      "On the left, write only verifiable events (e.g. No message received by 3 PM).",
+      "On the right, acknowledge your emotional reactions (e.g. Felt dismissed and anxious).",
+      "Notice how seeing the objective facts frees up mental clarity to address the situation constructively."
+    ],
+    "target_moods": [
+      "Anxious",
+      "Stressed",
+      "Sad"
+    ]
+  },
+  {
+    "id": "plan-b-deadline",
+    "title": "Plan B for the Deadline",
+    "type": "journaling",
+    "duration_minutes": 5,
+    "quick": false,
+    "relief": "calm",
+    "mood_fit": {
+      "Stressed": 3,
+      "Overwhelmed": 3,
+      "Anxious": 2
+    },
+    "target_themes": [
+      "teamwork",
+      "academics",
+      "work"
+    ],
+    "description": "Define the minimum viable submission you can produce independently if help does not arrive on time.",
+    "steps": [
+      "Identify the core requirements needed to submit a passing, valid draft of the project.",
+      "Outline what you can realistically complete on your own before the cutoff time.",
+      "Prepare a short, factual note to your teacher or supervisor explaining what portion you completed.",
+      "Acknowledge that taking proactive control protects your standing and eases last-minute panic."
+    ],
+    "target_moods": [
+      "Stressed",
+      "Overwhelmed",
+      "Anxious"
+    ]
+  }
+]

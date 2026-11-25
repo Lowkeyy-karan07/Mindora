@@ -1,0 +1,55 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Environment variables & secrets (keep .env.example)
+.env
+.env.*
+!.env.example
+
+# Local SQLite database files & runtime data
+/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+
+# Next.js build & output
+/.next/
+/out/
+/build
+next-env.d.ts
+
+# Testing & coverage artifacts
+/coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+.tmp-e2e-metrics.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# OS & editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Vercel
+.vercel
