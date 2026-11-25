@@ -118,13 +118,14 @@ The primary user journey consists of five sequential steps:
 ### 2.4 Constraints
 - **Runtime Environment:** Next.js App Router (Node.js runtime enforced via `export const runtime = "nodejs"` on all route handlers).
 - **Database Engine:** `better-sqlite3` strictly. ORMs such as Prisma or Drizzle are explicitly prohibited.
-- **Persistence Path:** Relative path `./data/mindora.db` with automatic directory creation.
+- **Persistence Path:** Configurable via `DATABASE_PATH` (defaulting to `./data/mindora.db`, or `/var/data/mindora.db` when mounted on a persistent disk) with automatic directory creation.
 - **Authentication Model:** No authentication layer; single hardcoded seeded user `demo-user`. Every database table enforces a `user_id` column.
 - **AI Integration:** Google Gemini via `@google/genai` executed server-side only; bypassed whenever `DEMO_MODE=true` or when `GEMINI_API_KEY` is unset.
+- **Deployment:** Configured for single-instance Node.js hosting (e.g. Render Web Service via `render.yaml`) because SQLite runs embedded on local disk. In public demo deployments, data is shared under `demo-user` and may reset on ephemeral filesystems without a persistent disk (`SEED_ON_START=true` re-populates empty databases on startup).
 
 ### 2.5 Assumptions and Dependencies
 - Client devices support modern CSS (Flexbox, Grid, CSS transitions) with JavaScript enabled.
-- The hosting environment provides a writeable local filesystem for the SQLite database.
+- The hosting environment runs Node.js `>=20` on a single instance with a writeable local or mounted filesystem for the SQLite database (ephemeral disks on free tiers reset on restarts unless an optional persistent disk is attached).
 - Network access is required only when utilizing Google Gemini API; in offline environments, the system functions seamlessly via rule-based ranking.
 
 ### 2.6 Out-of-Scope (Non-Goals)

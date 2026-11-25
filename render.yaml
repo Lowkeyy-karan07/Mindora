@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: mindora
+    runtime: node
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/status
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DEMO_MODE
+        value: "false"
+      - key: GEMINI_MODEL
+        value: "gemini-2.5-flash-lite"
+      - key: GEMINI_MODEL_FALLBACK
+        value: "gemini-2.5-flash-lite"
+      - key: SEED_ON_START
+        value: "true"
+      # Uses /var/data/mindora.db when a persistent disk is attached;
+      # on a free plan without a disk, change this in the Render dashboard to ./data/mindora.db (ephemeral).
+      - key: DATABASE_PATH
+        value: "/var/data/mindora.db"
+      # Secret value must be set manually in the Render dashboard; never stored in git
+      - key: GEMINI_API_KEY
+        sync: false
+
+    # Optional persistent disk for SQLite durability across deploys and restarts.
+    # NOTE: Persistent disks require a paid Render plan. Uncomment when using a paid instance:
+    # disk:
+    #   name: mindora-data
+    #   mountPath: /var/data
+    #   sizeGB: 1

@@ -107,6 +107,44 @@ npm run build
 
 ---
 
+## 🚀 Deployment (Render)
+
+Mindora is configured for one-click Blueprint or manual Node.js Web Service deployment on [Render](https://render.com) via [`render.yaml`](render.yaml).
+
+- **Live Demo URL:** `https://<your-render-service>.onrender.com` *(replace with your Render service URL once deployed)*
+- **Health Check:** `/api/status` (returns `{ mode: "ai" | "rules" }` with zero secrets exposed)
+
+### 1. Create the Web Service from GitHub
+
+1. Push this repository to GitHub (never commit `.env.local` or `*.db` files).
+2. In the Render dashboard, choose **New + → Blueprint** (to load `render.yaml` automatically) or **New + → Web Service** and connect your GitHub repository.
+3. Verify the build and start commands:
+   - **Runtime:** Node (`>=20`, configured via `engines` and `NODE_VERSION=20`)
+   - **Build Command:** `npm ci && npm run build`
+   - **Start Command:** `npm start` (runs `scripts/start.mjs` on `$PORT`, defaulting to `3000`)
+
+### 2. Configure Environment Variables (Render Dashboard)
+
+Set secrets and runtime variables in **Environment** inside the Render dashboard (never commit real API keys to git):
+
+| Variable | Recommended Value | Notes |
+| --- | --- | --- |
+| `NODE_VERSION` | `20` | Matches `package.json` `engines` |
+| `DEMO_MODE` | `false` | Set `true` to disable live Gemini calls |
+| `GEMINI_MODEL` | `gemini-2.5-flash-lite` | Primary Gemini model |
+| `GEMINI_MODEL_FALLBACK` | `gemini-2.5-flash-lite` | Fallback model when primary fails |
+| `GEMINI_API_KEY` | *(set in Render dashboard)* | Declared `sync: false` in `render.yaml`; omit to run safely in Rules mode |
+| `SEED_ON_START` | `true` | Populates sample demo records on startup when the DB is empty |
+| `DATABASE_PATH` | `./data/mindora.db` *(Free tier)* or `/var/data/mindora.db` *(with Disk)* | Auto-creates parent directory on startup |
+
+### 3. SQLite Storage & Demo Data Notice
+
+- **Free Tier (Ephemeral Filesystem):** Render's free web service disk resets on deploys, restarts, and spin-down. Set `DATABASE_PATH=./data/mindora.db` with `SEED_ON_START=true` so the dashboard starts populated cleanly on every cold start.
+- **Persistent Storage (Optional Paid Plan):** Uncomment the `disk` block in [`render.yaml`](render.yaml) (`mountPath: /var/data`, `sizeGB: 1`) and keep `DATABASE_PATH=/var/data/mindora.db` to retain SQLite data across deploys on a single instance.
+- **Shared Demo Notice:** Mindora uses a single shared demo profile (`demo-user`) with no user accounts. On a public demo deployment, data is shared and may reset—avoid entering sensitive personal details.
+
+---
+
 ## 📚 Documentation
 
 - 📄 [Software Requirements Specification (`/docs/SRS.md`)](docs/SRS.md)

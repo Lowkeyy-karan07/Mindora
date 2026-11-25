@@ -139,6 +139,15 @@ export default function DashboardPage() {
         </Link>
       </div>
 
+      {process.env.NODE_ENV === 'production' && (
+        <div
+          role="note"
+          className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 text-xs sm:text-sm text-amber-900"
+        >
+          Demo deployment: data is shared and may be reset. Don&apos;t enter personal information.
+        </div>
+      )}
+
       {deleteSuccessMessage && (
         <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between">
           <span>✓ {deleteSuccessMessage}</span>

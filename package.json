@@ -2,10 +2,13 @@
   "name": "mindora",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/start.mjs",
     "lint": "eslint",
     "check:ai": "tsx scripts/check-ai.ts",
     "compare:ai": "tsx scripts/compare-ai.ts",

@@ -2,13 +2,16 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import { initSchema } from './schema';
+import { seedDatabase } from './seed';
 
 declare global {
   var __mindora_db__: Database.Database | undefined;
+  var __mindora_seed_checked__: boolean | undefined;
 }
 
 export function getDbPath(): string {
-  const customPath = process.env.MINDORA_DB_PATH;
+  const customPath =
+    process.env.DATABASE_PATH?.trim() || process.env.MINDORA_DB_PATH?.trim();
   if (customPath) {
     return customPath;
   }
@@ -38,9 +41,21 @@ export function getDb(customPath?: string): Database.Database {
 
   const db = new Database(dbFilePath);
   initSchema(db);
+  global.__mindora_db__ = db;
 
-  if (process.env.NODE_ENV !== 'production') {
-    global.__mindora_db__ = db;
+  // On startup, if SEED_ON_START=true and the database is empty, run the idempotent seed once
+  if (
+    process.env.SEED_ON_START === 'true' &&
+    !global.__mindora_seed_checked__ &&
+    dbFilePath !== ':memory:'
+  ) {
+    global.__mindora_seed_checked__ = true;
+    const row = db
+      .prepare(`SELECT COUNT(*) as count FROM checkins`)
+      .get() as { count: number } | undefined;
+    if (!row || row.count === 0) {
+      seedDatabase(db);
+    }
   }
 
   return db;
@@ -51,4 +66,5 @@ export function closeDb(): void {
     global.__mindora_db__.close();
     global.__mindora_db__ = undefined;
   }
+  global.__mindora_seed_checked__ = undefined;
 }
