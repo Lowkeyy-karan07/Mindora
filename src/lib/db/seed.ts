@@ -200,7 +200,12 @@ export function seedDatabase(customDb?: Database.Database): void {
   console.log('- Feedback effects active: box-breathing (yes), body-scan (no), brain-dump (a_little)');
 }
 
-// If executed directly via CLI
-if (require.main === module || process.argv[1]?.includes('seed')) {
+// If executed directly via CLI (never at module import time or during next build)
+const entryScript = process.argv[1] ?? '';
+const isDirectSeedCli =
+  process.env.NEXT_PHASE !== 'phase-production-build' &&
+  ((typeof require !== 'undefined' && require.main === module) ||
+    /(^|[\\/])seed\.(ts|js|mjs|cjs)$/.test(entryScript));
+if (isDirectSeedCli) {
   seedDatabase();
 }

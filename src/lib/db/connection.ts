@@ -19,6 +19,10 @@ export function getDbPath(): string {
 }
 
 export function getDb(customPath?: string): Database.Database {
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    throw new Error('Database must not be opened during next build');
+  }
+
   // If a custom or test path (such as ':memory:') is explicitly provided, create and return fresh instance
   if (customPath && customPath !== getDbPath()) {
     const db = new Database(customPath);
