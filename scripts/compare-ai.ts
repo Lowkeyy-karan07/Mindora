@@ -42,23 +42,16 @@ interface EvalCase {
 }
 
 const EVAL_CASES: EvalCase[] = [
-  { mood: 'Anxious', note: 'Not performing well in academics' },
-  {
-    mood: 'Stressed',
-    note: 'My teammate is not contributing anything to our project and the deadline is close',
-  },
-  {
-    mood: 'Stressed',
-    note: "My manager keeps adding work and I can't switch off at night",
-  },
-  { mood: 'Sad', note: 'I miss my friends since moving to a new city' },
-  {
-    mood: 'Overwhelmed',
-    note: 'Exams, project and family function all this week',
-  },
-  { mood: 'Anxious', note: 'I have a medical test result coming tomorrow' },
-  { mood: 'Sad', note: 'Money is tight this month and I feel embarrassed' },
+  { mood: 'Anxious', note: "3am can't sleep exam tomorrow" },
+  { mood: 'Stressed', note: 'my phone broke and my trip is tomorrow' },
+  { mood: 'Sad', note: 'argued with my dad tonight' },
+  { mood: 'Sad', note: 'my pet is sick' },
+  { mood: 'Anxious', note: 'I have a job interview in an hour' },
+  { mood: 'Overwhelmed', note: 'tired' },
   { mood: 'Okay', note: '' },
+  { mood: 'Anxious', note: 'Not performing well in academics' },
+  { mood: 'Sad', note: 'I miss my friends since moving to a new city' },
+  { mood: 'Anxious', note: 'Money is tight this month and bills are due' },
 ];
 
 const GENERIC_STEP_REGEX = /\b(water|stretch|breathe|breath)\b/i;
@@ -114,8 +107,9 @@ async function main() {
     const differs = nowDiffers || nextDiffers;
     if (differs) nowOrNextDifferCount++;
 
-    const aiStepTitles = aiPlan.later.action_steps.map((s) => s.step);
-    const rulesStepTitles = rulesPlan.later.action_steps.map((s) => s.step);
+    const aiFirstStep = aiPlan.later.action_steps[0];
+    const rulesFirstStep = rulesPlan.later.action_steps[0];
+    const aiWhatNot = aiPlan.understanding?.what_not_to_suggest || [];
 
     // Check whether non-empty note check-ins produced any generic action steps
     const hasGenericStep =
@@ -123,13 +117,19 @@ async function main() {
       aiPlan.later.action_steps.some((s) => GENERIC_STEP_REGEX.test(s.step));
     if (hasGenericStep) genericStepDetectedCount++;
 
-    console.log(`[${i + 1}/8] ${mood} + "${note || '(empty)'}"`);
+    console.log(`[${i + 1}/${EVAL_CASES.length}] ${mood} + "${note || '(empty)'}"`);
     if (aiDiagnostics.length > 0) {
       console.log(`  Diagnostic:    ${aiDiagnostics.join(' | ')}`);
     }
     console.log(
-      `  AI Status:     now=${aiPlan.now.by}, next=[${aiPlan.next.map((n) => n.by).join(',')}], later=${aiPlan.later.by}`
+      `  AI Status:     now=${aiPlan.now.by}, next=[${aiPlan.next.map((n) => n.by).join(',')}], later=${aiPlan.later.by}, interpreted=${Boolean(aiPlan.note_interpreted)}`
     );
+    console.log(
+      `  Rules Status:  interpreted=${Boolean(rulesPlan.note_interpreted)} | ack_tail=${rulesPlan.acknowledgement.includes('Turn on AI mode') ? 'honest-unmatched' : 'matched-or-empty'}`
+    );
+    if (aiWhatNot.length > 0) {
+      console.log(`  AI Avoid List: ${aiWhatNot.join(', ')}`);
+    }
     console.log(
       `  AI Now:        ${aiPlan.now.activity.title} (${aiNowId})`
     );
@@ -143,10 +143,10 @@ async function main() {
       `  Rules Next:    ${rulesPlan.next.map((n) => `${n.activity.title} (${n.activity.id})`).join(' | ')}`
     );
     console.log(
-      `  AI Steps (3):  ${aiStepTitles.join(' | ')}`
+      `  AI Step #1:    ${aiFirstStep.step} — ${aiFirstStep.detail}`
     );
     console.log(
-      `  Rules Steps:   ${rulesStepTitles.join(' | ')}`
+      `  Rules Step #1: ${rulesFirstStep.step} — ${rulesFirstStep.detail}`
     );
     console.log(
       `  Differs:       ${differs ? `YES (now=${nowDiffers}, next=${nextDiffers})` : 'NO (identical picks)'} | Generic non-empty AI step: ${hasGenericStep ? 'YES' : 'NO'}`

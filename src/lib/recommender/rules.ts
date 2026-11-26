@@ -319,8 +319,8 @@ export function generateTemplatedReason(
 
 /**
  * Scores candidate activities based on:
- * Score = mood_fit * 3 + theme bonus (+5 if mood_fit >= 1) + feedback preference (capped to -2..+2) - recent completion penalty (1.5)
- * Mood fit strictly dominates feedback (fit 0 max 2, fit 3 min 7).
+ * Score = mood_fit * 3 + tiny theme tie-breaker (+0.25 if mood_fit >= 1) + feedback preference (capped to -2..+2) - recent completion penalty (1.5)
+ * Mood fit and user feedback strictly dominate weak theme hints.
  * Deterministic tie-break by activity id.
  */
 export function scoreCandidates(
@@ -349,12 +349,12 @@ export function scoreCandidates(
     score += fit * 3;
     const isMoodMatch = fit >= 1;
 
-    // 2. Theme match bonus (+5), strictly applies ONLY if mood_fit >= 1
+    // 2. Tiny theme tie-breaker (+0.25), strictly applies ONLY if mood_fit >= 1 (never overrides mood_fit or feedback)
     let matchedTheme: Theme | undefined = undefined;
     if (detectedThemes.length > 0 && activity.target_themes && fit >= 1) {
       matchedTheme = detectedThemes.find((t) => activity.target_themes!.includes(t));
       if (matchedTheme) {
-        score += 5;
+        score += 0.25;
       }
     }
 

@@ -136,29 +136,23 @@ describe('Theme-Aware Recommender (Prompt 13 Updated to New Weighted Scoring)', 
     expect(run1.map((r) => r.reason)).toEqual(run2.map((r) => r.reason));
   });
 
-  it('theme-match bonus (+5 for fit >= 1) lifts academic activity above plain mood match', () => {
+  it('tiny theme tie-breaker (+0.25 for fit >= 1) breaks equal-score ties without overriding mood_fit or feedback', () => {
     const mood: Mood = 'Anxious';
 
-    // name-worry-park-it has fit 3 for Anxious (9) + academics theme bonus (+5) = 14
-    // 4-7-8-breathing has fit 3 for Anxious (9) + yes feedback (+2) = 11 (no academics theme)
+    // name-worry-park-it has fit 3 for Anxious (9) + tiny academics tie-breaker (+0.25) = 9.25
+    // 4-7-8-breathing has fit 3 for Anxious (9) + yes feedback (+2) = 11 (user feedback strictly wins)
     const feedback = { '4-7-8-breathing': 'yes' as const };
     const scored = scoreCandidates(mood, feedback, [], ['academics']);
 
     const academicWorry = scored.find((s) => s.activity.id === 'name-worry-park-it')!;
     const breathingWithFeedback = scored.find((s) => s.activity.id === '4-7-8-breathing')!;
-
-    expect(academicWorry.score).toBe(14); // 9 + 5
-    expect(breathingWithFeedback.score).toBe(11); // 9 + 2
-    expect(academicWorry.score).toBeGreaterThan(breathingWithFeedback.score);
-
-    // break-it-into-one-small-step has fit 2 for Anxious (6) + academics (+5) = 11
-    // 5-4-3-2-1-grounding has fit 3 for Anxious (9) + no feedback (0) = 9
-    const smallStep = scored.find((s) => s.activity.id === 'break-it-into-one-small-step')!;
     const grounding = scored.find((s) => s.activity.id === '5-4-3-2-1-grounding')!;
 
-    expect(smallStep.score).toBe(11);
+    expect(academicWorry.score).toBe(9.25); // 9 + 0.25
+    expect(breathingWithFeedback.score).toBe(11); // 9 + 2
+    expect(breathingWithFeedback.score).toBeGreaterThan(academicWorry.score);
     expect(grounding.score).toBe(9);
-    expect(smallStep.score).toBeGreaterThan(grounding.score);
+    expect(academicWorry.score).toBeGreaterThan(grounding.score);
   });
 });
 

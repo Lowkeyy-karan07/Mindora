@@ -38,6 +38,7 @@ export interface Activity {
   mood_fit: MoodFit;
   target_moods?: Mood[];
   target_themes?: Theme[];
+  tags?: string[];
   description: string;
   steps: string[];
 }
@@ -98,10 +99,17 @@ export type Need = (typeof NEEDS)[number];
 export const INTENSITIES = ['low', 'medium', 'high'] as const;
 export type Intensity = (typeof INTENSITIES)[number];
 
+export const URGENCIES = ['low', 'medium', 'high'] as const;
+export type Urgency = (typeof URGENCIES)[number];
+
 export interface Understanding {
   main_concern: string;
-  intensity: Intensity;
-  need: Need;
+  urgency: Urgency;
+  time_context: string;
+  constraints: string[];
+  what_not_to_suggest: string[];
+  intensity?: Intensity;
+  need?: Need;
 }
 
 export interface Recommendation {
@@ -144,6 +152,7 @@ export interface WellbeingPlan {
   next: PlanNextItem[];
   later: PlanLater;
   relevant_themes?: Theme[];
+  note_interpreted?: boolean;
 }
 
 export const WHEN_TIMEFRAMES = ['now', 'today', 'this_week'] as const;
@@ -182,6 +191,7 @@ export interface RecommendationResult {
   situation_by?: 'ai' | 'rules';
   relevant_themes?: Theme[];
   has_note?: boolean;
+  note_interpreted?: boolean;
   plan?: WellbeingPlan;
   constraints_relaxed?: boolean;
 }

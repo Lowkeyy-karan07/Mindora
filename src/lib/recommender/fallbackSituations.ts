@@ -226,11 +226,11 @@ export const THEME_SITUATION_TEMPLATES: Record<
   sleep: {
     Stressed: {
       summary: "Racing thoughts and physical tension are interfering with deep, restorative nightly rest.",
-      what_is_in_your_control: "You can create a calm transition routine between daytime work and nighttime sleep.",
+      what_is_in_your_control: "You can create a calm transition routine between today's thoughts and nighttime rest.",
       action_steps: [
-        { step: "Dim surrounding lights", detail: "Lower screen brightness and switch to warm, soft indoor lighting.", time: "now" },
-        { step: "Write tomorrow's to-do list", detail: "Put tomorrow's tasks on paper so your mind does not loop on them in bed.", time: "today" },
-        { step: "Keep consistent bedtime", detail: "Aim to turn in at the same hour for the next three nights.", time: "this_week" },
+        { step: "Dim surrounding lights", detail: "Lower brightness around you and switch to warm, soft lighting.", time: "now" },
+        { step: "Park lingering worries on paper", detail: "Write down anything swirling on your mind so you do not have to hold it in bed.", time: "today" },
+        { step: "Keep consistent bedtime", detail: "Aim to settle into rest at a steady hour over the next three nights.", time: "this_week" },
       ],
     },
     Anxious: {
@@ -465,59 +465,195 @@ export const THEME_SITUATION_TEMPLATES: Record<
 
   general: {
     Stressed: {
-      summary: "Experiencing noticeable daytime tension and strain right now.",
-      what_is_in_your_control: "Add a little more detail in your note and the plan can be more specific. You can release physical tension right now.",
+      summary: "You are carrying noticeable physical and mental tension right now.",
+      what_is_in_your_control: "Turn on AI mode to get suggestions based on your note. Right now you can take one calming pause.",
       action_steps: [
-        { step: "Unclench jaw and shoulders", detail: "Notice physical tension and let your shoulders drop naturally down.", time: "now" },
-        { step: "Step back for ten minutes", detail: "Walk away from your screen or demanding tasks for ten quiet minutes.", time: "today" },
-        { step: "Set a restful evening boundary", detail: "Designate one evening this week for pure rest with no obligations.", time: "this_week" },
+        { step: "Unclench jaw and shoulders", detail: "Notice physical tension and let your shoulders drop gently down.", time: "now" },
+        { step: "Slow your breathing pace", detail: "Take five unhurried breaths with a slightly longer exhale than inhale.", time: "today" },
+        { step: "Give yourself quiet space", detail: "Protect ten quiet minutes later today to let your nervous system settle.", time: "this_week" },
       ],
     },
     Anxious: {
-      summary: "Experiencing physical and mental agitation without one specific isolated cause.",
-      what_is_in_your_control: "Add a little more detail in your note and the plan can be more specific. You can ground yourself right now.",
+      summary: "You are noticing anxious energy in your body and mind right now.",
+      what_is_in_your_control: "Turn on AI mode to get suggestions based on your note. Right now you can ground yourself gently.",
       action_steps: [
-        { step: "Anchor with physical touch", detail: "Feel your feet flat on the floor and take two slow, calming breaths.", time: "now" },
-        { step: "Write down your thoughts", detail: "Put racing thoughts onto a notepad to give your mind temporary relief.", time: "today" },
+        { step: "Anchor with physical touch", detail: "Feel both feet flat on the floor and take two slow, calming breaths.", time: "now" },
+        { step: "Name five steady sights", detail: "Look around the room and quietly notice five calm, neutral details.", time: "today" },
         { step: "Talk with someone trusted", detail: "Share how you have been feeling with someone who makes you feel safe.", time: "this_week" },
       ],
     },
     Overwhelmed: {
-      summary: "A general sense of pressure has created mental fatigue where everything feels demanding.",
-      what_is_in_your_control: "Add a little more detail in your note and the plan can be more specific. You can do just one small thing right now.",
+      summary: "Things feel heavy right now, and slowing down comes first.",
+      what_is_in_your_control: "Turn on AI mode to get suggestions based on your note. You only need one calm step right now.",
       action_steps: [
-        { step: "Pause for sixty quiet seconds", detail: "Close your eyes and breathe slowly without checking any messages.", time: "now" },
-        { step: "Select one micro-action", detail: "Choose the easiest single item on your list and finish just that.", time: "today" },
-        { step: "Clear non-essential plans", detail: "Remove one optional commitment to create steady breathing room.", time: "this_week" },
+        { step: "Pause for sixty quiet seconds", detail: "Rest your eyes for a minute and breathe softly without rushing.", time: "now" },
+        { step: "Take one gentle sensory reset", detail: "Drink cool water or feel the support of your chair beneath you.", time: "today" },
+        { step: "Protect quiet recovery time", detail: "Give yourself permission to keep the rest of your week lighter where possible.", time: "this_week" },
       ],
     },
     Sad: {
-      summary: "Feeling low, quiet, or emotionally tender without high energy or enthusiasm today.",
-      what_is_in_your_control: "Add a little more detail in your note and the plan can be more specific. Honor your gentle pace right now.",
+      summary: "You are feeling low or emotionally heavy right now.",
+      what_is_in_your_control: "Turn on AI mode to get suggestions based on your note. Move gently and be kind to yourself.",
       action_steps: [
-        { step: "Offer yourself gentle warmth", detail: "Place a hand over your heart and let yourself move gently today.", time: "now" },
-        { step: "Enjoy one soft comfort", detail: "Listen to comforting music, step outside, or make a warm drink.", time: "today" },
-        { step: "Connect with someone kind", detail: "Spend time with a supportive friend or sit in a peaceful green spot.", time: "this_week" },
+        { step: "Offer yourself gentle warmth", detail: "Place a hand over your heart and let yourself move gently right now.", time: "now" },
+        { step: "Enjoy one soft comfort", detail: "Wrap up in something warm, listen to calm audio, or rest quietly.", time: "today" },
+        { step: "Connect with someone kind", detail: "Spend time with a supportive person or sit somewhere peaceful.", time: "this_week" },
       ],
     },
     Okay: {
-      summary: "Experiencing steady balance, ease, and emotional clarity in your day.",
-      what_is_in_your_control: "Add a little more detail in your note and the plan can be more specific. You can reinforce steady habits right now.",
+      summary: "You are checking in with steady calm right now.",
+      what_is_in_your_control: "Turn on AI mode to get suggestions based on your note. You can protect this steady pace.",
       action_steps: [
-        { step: "Notice one positive anchor", detail: "Take thirty seconds to enjoy this steady, balanced feeling.", time: "now" },
-        { step: "Set one clear intention", detail: "Decide on one constructive focus for the rest of your day.", time: "today" },
-        { step: "Try an inspiring hobby", detail: "Explore a creative project or pleasant walk you enjoy.", time: "this_week" },
+        { step: "Notice one calm anchor", detail: "Take thirty seconds to notice what feels steady in your body right now.", time: "now" },
+        { step: "Take an unhurried breather", detail: "Enjoy two slow breaths before moving on with your day.", time: "today" },
+        { step: "Keep room for rest", detail: "Leave a small pocket of unscheduled quiet time later this week.", time: "this_week" },
       ],
     },
   },
 };
 
+export const HIGH_CONFIDENCE_SITUATIONS = [
+  'sleep',
+  'exam',
+  'conflict',
+  'loneliness',
+  'romance',
+  'money',
+] as const;
+export type HighConfidenceSituation = (typeof HIGH_CONFIDENCE_SITUATIONS)[number];
+
+export const ROMANCE_SITUATION_TEMPLATES: Record<Mood, SituationTemplate> = {
+  Stressed: {
+    summary: "Tension or uncertainty in a romantic relationship is weighing on you right now.",
+    what_is_in_your_control: "You can slow down reactive tension and choose calm, honest communication when ready.",
+    action_steps: [
+      { step: "Pause before replying", detail: "Give yourself five quiet minutes to settle before responding to any message.", time: "now" },
+      { step: "Write down what matters", detail: "Jot one calm sentence about what you actually feel or need right now.", time: "today" },
+      { step: "Talk when both feel calm", detail: "Pick a quiet, unhurried time to share your thoughts respectfully.", time: "this_week" },
+    ],
+  },
+  Anxious: {
+    summary: "Worry or uncertainty around a romantic connection is stirring up anxious feelings.",
+    what_is_in_your_control: "You can ground yourself in the present moment rather than trying to predict every outcome.",
+    action_steps: [
+      { step: "Ground in three slow breaths", detail: "Feel both feet steady on the floor and lengthen each exhale gently.", time: "now" },
+      { step: "Notice facts vs fears", detail: "Separate what was actually said from anxious worst-case guesses.", time: "today" },
+      { step: "Share openly when ready", detail: "Express one simple need calmly without rushing for an instant fix.", time: "this_week" },
+    ],
+  },
+  Overwhelmed: {
+    summary: "Strong feelings around a romantic situation feel heavy right now.",
+    what_is_in_your_control: "You can take quiet breathing room right now without solving everything today.",
+    action_steps: [
+      { step: "Take sixty quiet seconds", detail: "Step away from messages for one minute and let your shoulders drop.", time: "now" },
+      { step: "Tend to simple comfort", detail: "Drink some water and give your mind a brief break from replaying conversations.", time: "today" },
+      { step: "Lean on trusted support", detail: "Check in with a supportive friend who listens calmly.", time: "this_week" },
+    ],
+  },
+  Sad: {
+    summary: "Heartache, distance, or disappointment in a romantic relationship is hurting right now.",
+    what_is_in_your_control: "You can treat yourself with deep gentleness and take things one hour at a time.",
+    action_steps: [
+      { step: "Offer yourself gentle warmth", detail: "Place a hand on your chest and allow yourself to feel hurt without judgment.", time: "now" },
+      { step: "Choose one small comfort", detail: "Wrap up somewhere cozy or message a caring friend for quiet company.", time: "today" },
+      { step: "Give feelings room to settle", detail: "Move slowly this week without forcing immediate answers.", time: "this_week" },
+    ],
+  },
+  Okay: {
+    summary: "Checking in thoughtfully around a romantic connection with calm perspective.",
+    what_is_in_your_control: "You can stay grounded in kindness, honesty, and mutual respect.",
+    action_steps: [
+      { step: "Take one steady breath", detail: "Notice what feels calm and clear inside you right now.", time: "now" },
+      { step: "Share one warm word", detail: "Express simple appreciation or care when the moment feels natural.", time: "today" },
+      { step: "Protect unhurried time", detail: "Keep space this week for calm, distraction-free connection.", time: "this_week" },
+    ],
+  },
+};
+
+export function matchHighConfidenceSituation(
+  note?: string | null
+): HighConfidenceSituation | null {
+  if (!note || typeof note !== 'string' || !note.trim()) {
+    return null;
+  }
+  const text = note.trim();
+
+  // 1. Sleep / late-night sleeplessness FIRST so "3am, can't sleep, exam tomorrow" routes to sleep, never study
+  if (
+    /\b(can(?:'|no)?t\s+sleep|cannot\s+sleep|unable\s+to\s+sleep|hard\s+to\s+sleep|struggling\s+to\s+sleep|insomnia|sleepless|wide\s+awake|lying\s+awake|staying\s+awake|restless\s+night|(?:1[0-2]|0?[1-5])\s*(?::\d{2})?\s*a\.?m\.?|midnight|late\s+night|middle\s+of\s+the\s+night|bedtime|nightmares?|waking\s+up\s+at\s+night)\b/i.test(
+      text
+    )
+  ) {
+    return 'sleep';
+  }
+
+  // 2. Interpersonal conflict
+  if (
+    /\b(argued|arguing|argument|fight|fighting|conflict|conflicts|disagreement|disagreements|falling\s+out|confrontation|yelled|screamed|shouted|hostile|disrespected)\b/i.test(
+      text
+    )
+  ) {
+    return 'conflict';
+  }
+
+  // 3. Romance
+  if (
+    /\b(boyfriend|girlfriend|spouse|husband|wife|break\s*up|breakup|broke\s+up|heartbreak|heartbroken|romantic\s+partner|dating|fiance|fiancee|crush|divorce|ex-boyfriend|ex-girlfriend)\b/i.test(
+      text
+    )
+  ) {
+    return 'romance';
+  }
+
+  // 4. Loneliness
+  if (
+    /\b(lonely|loneliness|isolated|isolation|miss\s+my\s+friends?|missed\s+my\s+friends?|nobody\s+to\s+talk\s+to|no\s+one\s+to\s+talk\s+to|feel\s+so\s+alone|all\s+alone|left\s+out|disconnected)\b/i.test(
+      text
+    )
+  ) {
+    return 'loneliness';
+  }
+
+  // 5. Money (avoid matching physical damage like "phone broke")
+  if (
+    /\b(money|rent|bills?|debt|debts|financial|finances|expenses?|paycheck|budget|afford|savings|flat\s+broke|dead\s+broke|went\s+broke|i(?:'m|\s+am)\s+broke)\b/i.test(
+      text
+    )
+  ) {
+    return 'money';
+  }
+
+  // 6. Exam / academics (exclude medical/lab/blood/health/driving tests)
+  const sanitizedForExam = text.replace(
+    /\b(?:medical|blood|lab|health|diagnostic|clinic|hospital|driving)\s+tests?\b/gi,
+    ''
+  );
+  if (
+    /\b(exam|exams|finals|midterm|midterms|homework|assignment|assignments|coursework|syllabus|thesis|dissertation|academics?|grades?|marks|gpa|studying|study\s+(?:for|session|load|plan)|performing\s+well\s+in\s+academics|failing\s+(?:class|course|exam|test|semester)|test\s+(?:tomorrow|today|next\s+week|score))\b/i.test(
+      sanitizedForExam
+    )
+  ) {
+    return 'exam';
+  }
+
+  return null;
+}
+
+export function highConfidenceToTheme(sit: HighConfidenceSituation): Theme {
+  if (sit === 'exam') return 'academics';
+  if (sit === 'romance') return 'relationships';
+  return sit;
+}
+
 export function selectPrimaryTheme(detectedThemes: Theme[] = []): Theme | undefined {
   if (!detectedThemes || detectedThemes.length === 0) return undefined;
-  if (detectedThemes.includes('teamwork')) return 'teamwork';
+  if (detectedThemes.includes('sleep')) return 'sleep';
   if (detectedThemes.includes('conflict')) return 'conflict';
-  if (detectedThemes.includes('health_worry')) return 'health_worry';
-  return detectedThemes.find((t) => t !== 'general') || detectedThemes[0];
+  if (detectedThemes.includes('loneliness')) return 'loneliness';
+  if (detectedThemes.includes('money')) return 'money';
+  if (detectedThemes.includes('academics')) return 'academics';
+  if (detectedThemes.includes('relationships')) return 'relationships';
+  return undefined;
 }
 
 export function getUnclassifiedNoteSituation(mood: Mood): Situation {
@@ -577,10 +713,12 @@ export const EMPTY_NOTE_SITUATIONS: Record<Mood, Situation> = {
 
 /**
  * Main selector for fallback situation output.
+ * Honest rules mode: only uses situation templates for the 6 high-confidence categories
+ * (sleep, exam, conflict, loneliness, romance, money). Unmatched notes get pure mood-based calming steps.
  */
 export function getFallbackSituation(
   mood: Mood,
-  detectedThemes: Theme[] = [],
+  _detectedThemes: Theme[] = [],
   note?: string | null
 ): Situation {
   const hasNote = Boolean(note && typeof note === 'string' && note.trim().length > 0);
@@ -590,12 +728,17 @@ export function getFallbackSituation(
     return EMPTY_NOTE_SITUATIONS[mood];
   }
 
-  const primaryTheme = selectPrimaryTheme(detectedThemes);
-  if (!primaryTheme || primaryTheme === 'general') {
+  const matched = matchHighConfidenceSituation(note);
+  if (!matched) {
     return getUnclassifiedNoteSituation(mood);
   }
 
-  const themeMap = THEME_SITUATION_TEMPLATES[primaryTheme];
+  if (matched === 'romance') {
+    return ROMANCE_SITUATION_TEMPLATES[mood];
+  }
+
+  const themeKey = highConfidenceToTheme(matched);
+  const themeMap = THEME_SITUATION_TEMPLATES[themeKey];
   if (themeMap && themeMap[mood]) {
     return themeMap[mood];
   }

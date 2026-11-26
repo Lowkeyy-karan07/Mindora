@@ -1,7 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { recommend, getAiPlan, stripCodeFences } from '../src/lib/recommender';
 import { detectThemes } from '../src/lib/recommender/themes';
-import { buildPools, isQuickActivity, matchesMoodGoal } from '../src/lib/recommender/plan';
+import {
+  buildPools,
+  contradictsWhatNotToSuggest,
+  isQuickActivity,
+  isWorkOrStudyActivity,
+  matchesMoodGoal,
+  validatePlan,
+} from '../src/lib/recommender/plan';
 import { getAiTelemetry, resetAiTelemetry } from '../src/lib/ai/gemini';
 import { Mood } from '../src/types';
 
@@ -291,31 +298,229 @@ describe('AI Plan Recommender & Gemini Integration', () => {
     });
   });
 
-  describe('Situation Coverage Across 12 Notes (AI Mocked)', () => {
-    const twelveScenarios: Array<{ mood: Mood; note: string }> = [
-      { mood: 'Anxious', note: 'Exams are approaching and I am falling behind' },
-      { mood: 'Stressed', note: 'My manager keeps piling extra work on me' },
-      { mood: 'Stressed', note: 'My teammate is not contributing anything to our project' },
-      { mood: 'Sad', note: 'Had an argument and fight with my parents today' },
-      { mood: 'Overwhelmed', note: 'Cannot sleep with insomnia again all week' },
-      { mood: 'Sad', note: 'I feel lonely and disconnected in a new town' },
-      { mood: 'Anxious', note: 'Money is tight and utility bills are overdue' },
-      { mood: 'Anxious', note: 'I have a medical test result coming tomorrow morning' },
-      { mood: 'Stressed', note: 'Stuck in a terrible two-hour commute both ways' },
-      { mood: 'Sad', note: 'Just having a bad day with no clear reason at all' },
-      { mood: 'Okay', note: '' },
-      { mood: 'Overwhelmed', note: 'tired' },
+  describe('AI-First Open-Ended Understanding, Guards & 16+ Diverse Scenarios (AI Mocked + AI Off)', () => {
+    const sixteenScenarios: Array<{
+      mood: Mood;
+      note: string;
+      timeContext?: string;
+      whatNotToSuggest?: string[];
+      lateNight?: boolean;
+      rulesMatched?: boolean;
+      forbiddenUnmatchedTopics?: RegExp;
+    }> = [
+      {
+        mood: 'Anxious',
+        note: "3am can't sleep exam tomorrow",
+        timeContext: '3am before exam tomorrow',
+        whatNotToSuggest: ['studying', 'caffeine', 'screens', 'new tasks', 'focus sprint'],
+        lateNight: true,
+        rulesMatched: true,
+      },
+      {
+        mood: 'Stressed',
+        note: 'my phone broke and my trip is tomorrow',
+        timeContext: 'night before trip',
+        whatNotToSuggest: ['caffeine'],
+        rulesMatched: false,
+        forbiddenUnmatchedTopics: /\b(financial|budget|bills|paycheck|rent)\b/i,
+      },
+      {
+        mood: 'Sad',
+        note: 'argued with my dad tonight',
+        timeContext: 'tonight after argument',
+        whatNotToSuggest: ['confrontation'],
+        rulesMatched: true,
+      },
+      {
+        mood: 'Sad',
+        note: 'my pet is sick',
+        timeContext: 'today',
+        whatNotToSuggest: ['intense exercise'],
+        rulesMatched: false,
+        forbiddenUnmatchedTopics: /\b(physician|primary care|medical test|hospital)\b/i,
+      },
+      {
+        mood: 'Anxious',
+        note: 'I have a job interview in an hour',
+        timeContext: '1 hour before interview',
+        whatNotToSuggest: ['new tasks'],
+        rulesMatched: false,
+        forbiddenUnmatchedTopics: /\b(quarterly|inbox|manager|spreadsheet)\b/i,
+      },
+      {
+        mood: 'Overwhelmed',
+        note: 'tired',
+        timeContext: '',
+        whatNotToSuggest: ['caffeine'],
+        rulesMatched: false,
+        forbiddenUnmatchedTopics: /\b(insomnia|bedtime|nightmare)\b/i,
+      },
+      {
+        mood: 'Okay',
+        note: '',
+        timeContext: '',
+        whatNotToSuggest: [],
+        rulesMatched: false,
+      },
+      {
+        mood: 'Anxious',
+        note: 'Exams are approaching and I am falling behind',
+        timeContext: 'daytime',
+        whatNotToSuggest: ['cramming'],
+        rulesMatched: true,
+      },
+      {
+        mood: 'Overwhelmed',
+        note: 'Wide awake at 2am worrying about everything',
+        timeContext: '2am sleepless',
+        whatNotToSuggest: ['studying', 'work', 'screens'],
+        lateNight: true,
+        rulesMatched: true,
+      },
+      {
+        mood: 'Sad',
+        note: 'I feel lonely and disconnected in a new town',
+        timeContext: 'evening',
+        whatNotToSuggest: [],
+        rulesMatched: true,
+      },
+      {
+        mood: 'Anxious',
+        note: 'Money is tight and utility bills are overdue',
+        timeContext: 'today',
+        whatNotToSuggest: ['impulse spending'],
+        rulesMatched: true,
+      },
+      {
+        mood: 'Sad',
+        note: 'Had a painful breakup with my girlfriend yesterday',
+        timeContext: 'day after breakup',
+        whatNotToSuggest: ['confrontation'],
+        rulesMatched: true,
+      },
+      {
+        mood: 'Stressed',
+        note: 'My car broke down on the highway before a wedding',
+        timeContext: 'afternoon',
+        whatNotToSuggest: [],
+        rulesMatched: false,
+        forbiddenUnmatchedTopics: /\b(financial|budget|bills|paycheck|rent)\b/i,
+      },
+      {
+        mood: 'Stressed',
+        note: 'Stuck in a terrible two-hour commute both ways',
+        timeContext: 'commute',
+        whatNotToSuggest: [],
+        rulesMatched: false,
+      },
+      {
+        mood: 'Overwhelmed',
+        note: 'Moving apartments tomorrow and surrounded by unpacked boxes',
+        timeContext: 'evening before move',
+        whatNotToSuggest: ['caffeine'],
+        rulesMatched: false,
+      },
+      {
+        mood: 'Anxious',
+        note: 'Waiting to hear back about my apartment lease renewal',
+        timeContext: 'today',
+        whatNotToSuggest: [],
+        rulesMatched: false,
+      },
     ];
 
-    it('handles all 12 diverse notes cleanly with valid duplicate-free quick-first AI plans', async () => {
-      for (const s of twelveScenarios) {
-        const mockResp = makeValidPlanJsonForMood(s.mood, s.note);
-        mockGenerateContent.mockResolvedValueOnce({ text: JSON.stringify(mockResp) });
+    it('handles all 16 diverse notes with mocked Gemini: valid plans, open-ended understanding, raw_note sent without user_id, zero console leaks, and late-night safety', async () => {
+      const logSpy = vi.spyOn(console, 'log');
+      const warnSpy = vi.spyOn(console, 'warn');
+      const errorSpy = vi.spyOn(console, 'error');
 
+      for (const s of sixteenScenarios) {
+        const pools = buildPools(s.mood, []);
+        const valid = makeValidPlanJsonForMood(s.mood, s.note, {
+          understanding: {
+            main_concern: `Supporting ${s.mood.toLowerCase()} state around note.`,
+            urgency: s.lateNight ? 'high' : 'medium',
+            time_context: s.timeContext || '',
+            constraints: s.lateNight ? ['needs sleep now'] : [],
+            what_not_to_suggest: s.whatNotToSuggest || [],
+            need: s.lateNight ? 'rest' : 'calm',
+          },
+          relevant_themes: [],
+        });
+
+        // Pick a non-work/non-contradicting activity when needed or let validatePlan repair if violated
+        mockGenerateContent.mockResolvedValueOnce({ text: JSON.stringify(valid) });
+
+        const res = await recommend(s.mood, s.note, 'private-user-id-abc');
+        const plan = res.plan!;
+
+        expect(plan).toBeDefined();
+        expect(plan.now.activity).toBeDefined();
+        expect(plan.next).toHaveLength(2);
+        expect(plan.later.action_steps).toHaveLength(3);
+        expect(plan.later.action_steps.some((st) => st.time === 'now')).toBe(true);
+        expect(isQuickActivity(plan.now.activity)).toBe(true);
+        expect(matchesMoodGoal(plan.now.activity, s.mood)).toBe(true);
+
+        const ids = [plan.now.activity.id, plan.next[0].activity.id, plan.next[1].activity.id];
+        expect(new Set(ids).size).toBe(3);
+
+        // Verify what_not_to_suggest is never contradicted by any chosen activity, instruction, or step
+        const whatNot = plan.understanding?.what_not_to_suggest || [];
+        expect(contradictsWhatNotToSuggest(plan.now.activity, whatNot)).toBe(false);
+        expect(contradictsWhatNotToSuggest(plan.now.instruction, whatNot)).toBe(false);
+        for (const n of plan.next) {
+          expect(contradictsWhatNotToSuggest(n.activity, whatNot)).toBe(false);
+        }
+        for (const st of plan.later.action_steps) {
+          expect(contradictsWhatNotToSuggest(`${st.step} ${st.detail}`, whatNot)).toBe(false);
+        }
+
+        // Late-night notes never receive work, study, or focus_sprint activities
+        if (s.lateNight) {
+          expect(isWorkOrStudyActivity(plan.now.activity)).toBe(false);
+          for (const n of plan.next) {
+            expect(isWorkOrStudyActivity(n.activity)).toBe(false);
+          }
+        }
+
+        // Verify payload sent raw_note and NO user_id
+        const lastCall = mockGenerateContent.mock.calls[mockGenerateContent.mock.calls.length - 1];
+        const sentPayload = JSON.parse(lastCall[0].contents);
+        expect(sentPayload).not.toHaveProperty('user_id');
+        expect(sentPayload).not.toHaveProperty('userId');
+        expect(JSON.stringify(sentPayload)).not.toContain('private-user-id-abc');
+        if (s.note.trim()) {
+          expect(sentPayload.raw_note).toBe(s.note.trim());
+        }
+      }
+
+      // Zero note text leaked to console
+      const allConsole = [
+        ...logSpy.mock.calls,
+        ...warnSpy.mock.calls,
+        ...errorSpy.mock.calls,
+      ]
+        .flat()
+        .map(String)
+        .join(' ');
+      expect(allConsole).not.toContain('my phone broke and my trip is tomorrow');
+      expect(allConsole).not.toContain('my pet is sick');
+      expect(allConsole).not.toContain('argued with my dad tonight');
+
+      logSpy.mockRestore();
+      warnSpy.mockRestore();
+      errorSpy.mockRestore();
+    });
+
+    it('AI-off mode across all 16 diverse notes: honest line for unmatched notes, no unrelated templates, late-night never gets study/work', async () => {
+      process.env.DEMO_MODE = 'true';
+
+      for (const s of sixteenScenarios) {
         const res = await recommend(s.mood, s.note);
         const plan = res.plan!;
 
-        expect(plan.now.by).toBe('ai');
+        expect(plan.now.by).toBe('rules');
         expect(plan.next).toHaveLength(2);
         expect(plan.later.action_steps).toHaveLength(3);
         expect(isQuickActivity(plan.now.activity)).toBe(true);
@@ -323,7 +528,88 @@ describe('AI Plan Recommender & Gemini Integration', () => {
 
         const ids = [plan.now.activity.id, plan.next[0].activity.id, plan.next[1].activity.id];
         expect(new Set(ids).size).toBe(3);
+
+        if (s.lateNight) {
+          expect(isWorkOrStudyActivity(plan.now.activity)).toBe(false);
+          for (const n of plan.next) {
+            expect(isWorkOrStudyActivity(n.activity)).toBe(false);
+          }
+          expect(plan.situation.summary.toLowerCase()).not.toContain('exam');
+        }
+
+        if (s.note.trim() && !s.rulesMatched) {
+          expect(plan.note_interpreted).toBe(false);
+          expect(plan.acknowledgement).toContain(
+            'Turn on AI mode to get suggestions based on your note.'
+          );
+          if (s.forbiddenUnmatchedTopics) {
+            const fullText = `${plan.acknowledgement} ${plan.situation.summary} ${plan.situation.what_is_in_your_control} ${JSON.stringify(plan.later.action_steps)}`;
+            expect(fullText).not.toMatch(s.forbiddenUnmatchedTopics);
+          }
+        }
       }
+    });
+
+    it('code-side guards replace ONLY violating AI parts against what_not_to_suggest and late-night rule', () => {
+      const mood: Mood = 'Anxious';
+      const note = "3am can't sleep exam tomorrow";
+      const pools = buildPools(mood, []);
+
+      // Deliberately inject a work/study activity, caffeine instruction, and studying step
+      const rawViolating = makeValidPlanJsonForMood(mood, note, {
+        understanding: {
+          main_concern: 'Anxious at 3am before tomorrow exam.',
+          urgency: 'medium',
+          time_context: '3am late night before exam',
+          constraints: ['must sleep now'],
+          what_not_to_suggest: ['studying', 'caffeine', 'screens', 'focus sprint'],
+          need: 'rest',
+        },
+        now: {
+          activity_id: pools.now_pool[0].id,
+          reason: 'Gentle breathing slows down nighttime racing thoughts.',
+          instruction: 'Drink coffee and open your laptop to read notes.',
+        },
+        next: [
+          {
+            activity_id: 'break-it-into-one-small-step', // tagged study/work!
+            reason: 'Break exam studying into tasks.',
+          },
+          {
+            activity_id:
+              pools.next_pool.filter((a) => !isWorkOrStudyActivity(a) && !contradictsWhatNotToSuggest(a, ['studying', 'caffeine', 'screens', 'focus sprint']))[2]?.id ||
+              'sleep-wind-down',
+            reason: 'Park worries calmly for the morning.',
+          },
+        ],
+        situation: {
+          summary: 'Awake at 3am feeling anxious about tomorrow exam.',
+          what_is_in_your_control: 'You can protect sleep tonight and handle review tomorrow.',
+          action_steps: [
+            { step: 'Dim room lights now', detail: 'Turn off bright ceiling lights and rest your eyes.', time: 'now' },
+            { step: 'Review flashcards now', detail: 'Study your hardest exam chapters for thirty minutes.', time: 'today' },
+            { step: 'Rest before morning', detail: 'Leave exam preparation until after waking up.', time: 'this_week' },
+          ],
+        },
+      });
+
+      const outcome = validatePlan(rawViolating, { mood, note, detectedThemes: [], pools });
+      const plan = outcome.plan;
+
+      // Acknowledgement stayed AI
+      expect(plan.acknowledgement_by).toBe('ai');
+      // Instruction contradicted caffeine/screens -> replaced cleanly with rules
+      expect(plan.now.by).toBe('rules');
+      expect(contradictsWhatNotToSuggest(plan.now.instruction, ['studying', 'caffeine', 'screens'])).toBe(false);
+      // next[0] was study/work at 3am -> replaced ONLY next[0], preserving next[1] as AI
+      expect(plan.next[0].by).toBe('rules');
+      expect(isWorkOrStudyActivity(plan.next[0].activity)).toBe(false);
+      expect(plan.next[1].by).toBe('ai');
+      // action_steps[1] contradicted studying -> replaced ONLY violating step!
+      expect(plan.later.action_steps[0].step).toBe('Dim room lights now');
+      expect(plan.later.action_steps[1].step.toLowerCase()).not.toContain('flashcard');
+      expect(plan.later.action_steps[2].step).toBe('Rest before morning');
+      expect(plan.later.by).toBe('rules');
     });
   });
 });

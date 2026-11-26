@@ -1,78 +1,42 @@
 # Mindora Test Execution & Coverage Report
 
 **Date of Execution:** November 25, 2026  
-**Environment:** Node v26.12.0, Windows, Next.js 16.4.6, better-sqlite3 13.2.0, Playwright 1.65.1, Vitest 5.1.1  
+**Environment:** Node v20.20.2 (pinned `20.18.0` / `20.x`), Windows, Next.js 16.4.6, better-sqlite3 11.10.0, Playwright 1.65.1, Vitest 5.1.1
 
 ---
 
 ## 1. Journey Metrics (Scripted in Playwright E2E)
 
-Measured using Playwright running against the production build with `DEMO_MODE=true` (`tests/e2e-demo.spec.ts`):
+Measured using Playwright running against `npm run start` (`NODE_ENV=production`) with `DEMO_MODE=true` (`tests/e2e-demo.spec.ts`):
 
 | Metric | Measured Value | Description / Trace |
 | :--- | :--- | :--- |
-| **Taps to Start Activity** | **3 taps** | **Tap 1:** Select "Anxious" mood radio card<br>**Tap 2:** Click "Get suggestions" button (with note "Not performing well in academics")<br>**Tap 3:** Click "Start Activity →" on academic recommendation |
-| **Time to Start Activity** | **1.89 seconds** (1,892 ms) | Measured elapsed wall-clock time from initial `page.goto('http://localhost:3000')` to arrival on `/activity/[sessionId]` |
+| **Taps to Start Activity** | **3 taps** | **Tap 1:** Select "Anxious" mood radio card<br>**Tap 2:** Click "Get suggestions" button (with note `"Not performing well in academics"`)<br>**Tap 3:** Click `"Start now"` on the `Right now` card |
+| **Time to Start Activity** | **1.18 seconds** (1,178 ms) | Measured elapsed wall-clock time from initial `page.goto('http://localhost:3000')` to arrival on `/activity/[sessionId]` |
 
 ---
 
 ## 2. Playwright E2E Test Results (`DEMO_MODE=true`)
 
-Executed via `npx playwright test`:
+Executed via `npm run test:e2e`:
 
 ```text
 Running 6 tests using 1 worker
 
-Mindora database seeded successfully:
-- Seeded 7 check-ins across multiple days
-- Seeded 7 completed sessions with feedback
-- Seeded 3 private journal reflections
-- Feedback effects active: box-breathing (yes), body-scan (no), brain-dump (a_little)
-
 === E2E METRICS ===
 Taps to start activity: 3
-Time from opening app to starting activity: 1.89s (1892ms)
+Time from opening app to starting activity: 1.18s (1178ms)
 ===================
 
-  ok 1 [chromium] › tests\e2e-demo.spec.ts:13:3 › Mindora E2E (DEMO_MODE=true) › Full journey: select Anxious with academics note → see acknowledgement, next step & academic activity → start activity → complete → submit "Yes" → dashboard (2.7s)
-  ok 2 [chromium] › tests\e2e-demo.spec.ts:153:3 › Mindora E2E (DEMO_MODE=true) › Crisis phrase shows safety screen with NO recommendations (1.2s)
-  ok 3 [chromium] › tests\e2e-demo.spec.ts:188:3 › Mindora E2E (DEMO_MODE=true) › Follow-up chat: Anxious + academics note → click "No breathing exercises" → zero breathing cards & bot reply → type crisis phrase → safety screen (1.6s)
-  ok 4 [chromium] › tests\journey.spec.ts:4:3 › Mindora End-to-End User Journey › clicks through complete journey: check-in → recommendations → breathing activity → feedback → dashboard → delete (2.8s)
-  ok 5 [chromium] › tests\journey.spec.ts:103:3 › Mindora End-to-End User Journey › grounding activity: step-by-step Next/Back navigation and completion (2.0s)
-  ok 6 [chromium] › tests\journey.spec.ts:136:3 › Mindora End-to-End User Journey › journaling activity: typing and saving to /api/journal (2.1s)
+  ok 1 [chromium] › tests\e2e-demo.spec.ts:13:3 › Full journey: Anxious + academics note -> ordered plan -> Start now in 1 tap -> feedback returns with Done & Next highlighted -> Later today shows 3 steps -> Dashboard (2.2s)
+  ok 2 [chromium] › tests\e2e-demo.spec.ts:153:3 › Crisis phrase shows safety screen with NO plan or recommendations (632ms)
+  ok 3 [chromium] › tests\e2e-demo.spec.ts:177:3 › Follow-up chat: Anxious + academics note -> "No breathing exercises" removes breathing from Right now and Next without changing Situation or Later -> crisis phrase triggers Safety Screen (1.0s)
+  ok 4 [chromium] › tests\journey.spec.ts:4:3 › clicks through complete journey: check-in → recommendations → breathing activity → feedback → dashboard → delete (1.6s)
+  ok 5 [chromium] › tests\journey.spec.ts:110:3 › grounding activity: step-by-step Next/Back navigation and completion (1.2s)
+  ok 6 [chromium] › tests\journey.spec.ts:143:3 › journaling activity: typing and saving to /api/journal (632ms)
 
-  6 passed (14.5s)
+  6 passed (11.8s)
 ```
-
-### Detailed E2E Scenarios Verified
-
-1. **Full User Journey with Note Themes, Acknowledgement, and Suggestions for You**:
-   - Checked in with mood **Anxious** and optional note: *"Not performing well in academics"*.
-   - Verified calm card rendered above recommendations with situational **acknowledgement** and the **Rules** badge.
-   - Verified exactly **3 recommendations** displayed with the **Rules** badge (per `DEMO_MODE=true`).
-   - Verified that an **academic activity** (`Name the Worry, Then Park It` / `Break It Into One Small Step` / `25-Minute Focus Sprint`) surfaced in the top 3 due to the theme bonus (+5).
-   - Verified **"Suggestions for you"** section with 3 cards displaying timeframe chips (`Now`, `Today`, `This week`), **Template** badge, and dedicated non-medical disclaimer.
-   - Verified *"One small step for today"* card rendered below recommendations with the **next_step** action and the **Rules** badge.
-   - Started the academic activity and verified navigation to `/activity/[sessionId]`.
-   - Completed the activity steps.
-   - Submitted **"Yes"** rating on feedback screen (*"Was this activity helpful?"*).
-   - Verified redirect to `/dashboard` displaying the check-in and completed academic activity with the **Helpful** badge.
-
-2. **Crisis Safety Trigger (Zero Recommendations)**:
-   - Entered crisis note: *"I cannot take this anymore, I want to end my life"*.
-   - Clicked *"Get suggestions"*.
-   - Verified the **Safety Screen** appeared with supportive contact resources (*A Trusted Person*, *Local Crisis Helpline*, *Local Emergency Services*).
-   - Verified that **NO recommendations**, NO acknowledgement, NO suggestions, and NO next step cards were generated.
-   - Verified clicking *"Return to Check-in"* resets the form back to clean state.
-
-3. **Follow-Up Recommendation Chat & In-Chat Crisis Interception**:
-   - Checked in with mood **Anxious** and note: *"Not performing well in academics"*.
-   - Verified *"Want to adjust these?"* chat panel and quick-reply chips.
-   - Clicked quick chip *"No breathing exercises"*.
-   - Verified assistant reply appeared in chat and all breathing exercise cards were removed from the 3 displayed cards.
-   - Verified **"Suggestions for you"** remained visible and intact after chat adjustment.
-   - Entered crisis phrase in chat input: *"I want to end my life right now"* and clicked *"Send"*.
-   - Verified immediate transition to **Safety Screen** with crisis contacts, zero recommendations, and zero text saved.
 
 ---
 
@@ -84,54 +48,60 @@ Executed via `npm run test:coverage` (`vitest run --coverage` using `@vitest/cov
  RUN  v5.1.1 D:/Mindora
       Coverage enabled with v8
 
- ✓ tests/themes.test.ts (18 tests) 161ms
- ✓ tests/recommender.test.ts (8 tests) 127ms
- ✓ tests/seed.test.ts (1 test) 127ms
- ✓ tests/file-db.test.ts (1 test) 226ms
- ✓ tests/db.test.ts (11 tests) 444ms
- ✓ tests/chat.test.ts (17 tests) 205ms
- ✓ tests/ai.test.ts (21 tests) 221ms
- ✓ tests/safety.test.ts (28 tests) 26ms
- ✓ tests/gemini.test.ts (18 tests) 16ms
+ ✓ tests/recommender.test.ts (8 tests) 88ms
+ ✓ tests/file-db.test.ts (1 test) 53ms
+ ✓ tests/themes.test.ts (18 tests) 174ms
+ ✓ tests/db.test.ts (11 tests) 110ms
+ ✓ tests/chat.test.ts (18 tests) 215ms
+ ✓ tests/safety.test.ts (28 tests) 27ms
+ ✓ tests/gemini.test.ts (23 tests) 39ms
+ ✓ tests/seed.test.ts (1 test) 48ms
+ ✓ tests/ai.test.ts (14 tests) 434ms
+ ✓ tests/plan.test.ts (18 tests) 195ms
 
- Test Files  9 passed (9)
-      Tests  123 passed (123)
-   Start at  14:34:24
-   Duration  2.03s (import 39%, tests 34%, worker 15%, transform 12%)
+ Test Files  10 passed (10)
+      Tests  140 passed (140)
+   Duration  1.92s
 ```
 
 ### Actual Code Coverage Table
 
-| Module / File | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **All files** | **84.40** | **76.22** | **91.17** | **85.17** | |
-| **src/lib/catalog** | **100.00** | **75.00** | **100.00** | **100.00** | |
-| ↳ `index.ts` | 100.00 | 75.00 | 100.00 | 100.00 | 6 |
-| **src/lib/chat** | **86.17** | **75.96** | **92.85** | **85.59** | |
-| ↳ `ai.ts` | 85.55 | 75.75 | 92.30 | 84.70 | 148, 250, 252, 286 |
-| ↳ `intent.ts` | 87.87 | 76.31 | 100.00 | 87.87 | 77, 80, 83, 86 |
-| **src/lib/db** | **89.00** | **78.83** | **88.46** | **89.41** | |
-| ↳ `connection.ts` | 65.21 | 50.00 | 66.66 | 65.21 | 13, 21–23, 35, 50–52 |
-| ↳ `repository.ts` | 90.97 | 83.96 | 90.00 | 91.60 | 344–349, 447–462 |
-| ↳ `schema.ts` | 100.00 | 100.00 | 100.00 | 100.00 | None |
-| ↳ `seed.ts` | 96.15 | 81.81 | 100.00 | 96.15 | 205 |
-| **src/lib/recommender** | **80.80** | **74.78** | **90.56** | **82.14** | |
-| ↳ `ai.ts` | 83.72 | 77.52 | 100.00 | 83.73 | 358–359, 386–395 |
-| ↳ `fallbackSuggestions.ts` | 100.00 | 62.50 | 100.00 | 100.00 | 721–722 |
-| ↳ `fallbackTemplates.ts` | 69.23 | 47.05 | 100.00 | 69.23 | 219–222 |
-| ↳ `index.ts` | 81.25 | 70.00 | 100.00 | 89.28 | 99–101 |
-| ↳ `rules.ts` | 77.61 | 76.27 | 81.48 | 78.88 | 268, 526, 531–532, 584 |
-| ↳ `themeKeywords.ts` | 100.00 | 100.00 | 100.00 | 100.00 | None |
-| ↳ `themes.ts` | 100.00 | 87.50 | 100.00 | 100.00 | 43 |
-| **src/lib/safety** | **100.00** | **100.00** | **100.00** | **100.00** | |
-| ↳ `index.ts` | 100.00 | 100.00 | 100.00 | 100.00 | None |
-| ↳ `phrases.ts` | 100.00 | 100.00 | 100.00 | 100.00 | None |
+| Module / File | % Stmts | % Branch | % Funcs | % Lines |
+| :--- | :---: | :---: | :---: | :---: |
+| **All files** | **85.12** | **75.84** | **86.32** | **86.46** |
+| **src/lib/ai/gemini.ts** | **96.62** | **89.81** | **100.00** | **96.55** |
+| **src/lib/catalog/index.ts** | **100.00** | **75.00** | **100.00** | **100.00** |
+| **src/lib/chat** | **82.53** | **75.00** | **85.71** | **81.96** |
+| **src/lib/db** | **86.40** | **75.15** | **88.88** | **86.76** |
+| **src/lib/recommender** | **83.73** | **74.36** | **84.21** | **85.71** |
+| ↳ `plan.ts` | 89.20 | 76.09 | 85.36 | 90.84 |
+| ↳ `fallbackTemplates.ts` | 100.00 | 85.71 | 100.00 | 100.00 |
+| ↳ `themeKeywords.ts` / `themes.ts` | 100.00 | 90.00–100.00 | 100.00 | 100.00 |
+| **src/lib/safety** | **100.00** | **100.00** | **100.00** | **100.00** |
 
 ---
 
-## 4. Summary of Verification Status
+## 4. Live AI vs Honest Rules Evaluation (`npm run compare:ai`)
 
-- **Unit & Integration Suite (Vitest):** 123 / 123 passed across 9 files (100% pass rate).
-- **End-to-End Suite (Playwright):** 6 / 6 passed across 2 files (100% pass rate).
-- **Core Engine Statement Coverage:** 84.29% statements, 85.03% lines, 90.29% functions (`src/lib/ai/gemini.ts` at 95.52% statements).
+Evaluated across 10 diverse check-ins (including unpredictable and ambiguous notes) comparing live Gemini vs `DEMO_MODE=true` Honest Rules Mode:
+
+- **Default `.env.local` model (`gemini-3.5-flash-lite`):** `1/10` live AI calls succeeded (`Okay + ""`); `9/10` encountered transient upstream `503 UNAVAILABLE` (*"This model is currently experiencing high demand"*), triggering clean rules fallback without errors.
+- **`gemini-flash-lite-latest` run:** `2/10` live AI calls succeeded before upstream `503` bursts on the remaining calls:
+  - **`Anxious + "3am can't sleep exam tomorrow"`**:
+    - *AI Avoid List:* `studying, caffeine, screens, new tasks, focus sprint`.
+    - *AI:* `now = Physiological Sigh`, `next = Name the Worry, Then Park It | Pick Your Conversation Moment`, `step #1 = Close your eyes — Turn away from all screens, put your phone face down, and let your body rest flat in bed.`
+    - *Rules (Honest Sleep Match):* `now = 4-7-8 Breathing`, `next = Sleep Wind-Down | Name the Worry, Then Park It`, `step #1 = Place phone across room`. Neither mode suggested study sprints at 3am.
+  - **`Anxious + "I have a job interview in an hour"`**:
+    - *AI (`interpreted=true`):* returned `Physiological Sigh` (`now`), `5-4-3-2-1 Grounding` (`next[0]`), and `what_not_to_suggest: [starting new projects, long journaling, cramming information]` (code guard swapped out AI's `journaling` `next[1]` choice cleanly).
+    - *Rules (`interpreted=false`):* honestly reported `Turn on AI mode to get suggestions based on your note.` with mood-based calming steps instead of an unrelated workplace-inbox template.
+  - **Unmatched notes in Rules Mode (`"my phone broke and my trip is tomorrow"`, `"my pet is sick"`, `"tired"`):** All honestly returned `interpreted=false` with `"Turn on AI mode to get suggestions based on your note."` and avoided unrelated `money`/`health_worry`/`sleep` templates.
+  - **Matched High-Confidence Rules (`"argued with my dad tonight"`, `"Not performing well in academics"`, `"I miss my friends..."`, `"Money is tight..."`):** Matched `conflict`, `exam`, `loneliness`, and `money` accurately without cross-topic leaks.
+
+---
+
+## 5. Summary of Verification Status
+
+- **Production Build (`npm run build`):** Exited `0` (TypeScript + Turbopack clean).
+- **Unit & Integration Suite (`npm test` / `npm run test:coverage`):** 140 / 140 passed across 10 files (100% pass rate).
+- **End-to-End Suite (`npm run test:e2e`):** 6 / 6 passed across 2 files (100% pass rate).
 - **Safety Module Coverage:** 100% statement, branch, function, and line coverage.

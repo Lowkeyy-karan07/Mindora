@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       situation_by: recResult.situation_by,
       relevant_themes: recResult.relevant_themes,
       has_note: recResult.has_note ?? Boolean(note && note.trim().length > 0),
+      note_interpreted: recResult.note_interpreted ?? Boolean(plan?.note_interpreted),
     });
   } catch (error) {
     return NextResponse.json(

@@ -1,9 +1,17 @@
 import { Mood, Theme, Need, Suggestion, Understanding, Situation } from '@/types';
 import { getFallbackSuggestions } from './fallbackSuggestions';
-import { getFallbackSituation, selectPrimaryTheme } from './fallbackSituations';
+import {
+  getFallbackSituation,
+  highConfidenceToTheme,
+  HighConfidenceSituation,
+  matchHighConfidenceSituation,
+} from './fallbackSituations';
 
 export * from './fallbackSuggestions';
 export * from './fallbackSituations';
+
+export const UNMATCHED_RULES_NOTE_LINE =
+  'Turn on AI mode to get suggestions based on your note.';
 
 export interface GuidanceResult {
   acknowledgement: string;
@@ -14,6 +22,8 @@ export interface GuidanceResult {
   suggestions?: Suggestion[];
   understanding?: Understanding;
   situation?: Situation;
+  matched_situation?: HighConfidenceSituation | null;
+  note_interpreted?: boolean;
 }
 
 /**
@@ -340,11 +350,11 @@ export const WHY_THIS_ORDER_TEMPLATES: Record<Theme, Record<Mood, string>> = {
     Okay: "Quick centering maintains fairness and calm in tricky conversations.",
   },
   general: {
-    Anxious: "Add a little more detail in your note next time; quick grounding settles tension first.",
-    Stressed: "Add a little more detail in your note next time; quick tension relief clears space first.",
-    Overwhelmed: "Add a little more detail in your note next time; pausing briefly breaks overload first.",
-    Sad: "Add a little more detail in your note next time; a gentle lift brings warmth first.",
-    Okay: "Add a little more detail in your note next time; a quick check-in maintains your balance.",
+    Anxious: "Calming your body first creates steady ground before trying the next mood-based step.",
+    Stressed: "Releasing physical tension first creates breathing room before moving into the next calming step.",
+    Overwhelmed: "Taking a quiet pause first slows overload before choosing one gentle next step.",
+    Sad: "Offering yourself soft warmth first brings gentle steadiness before the next caring step.",
+    Okay: "A brief mindful check-in maintains your calm balance across the day.",
   },
 };
 
@@ -368,7 +378,7 @@ export const MOOD_DEFAULT_FALLBACKS: Record<Mood, GuidanceResult> = {
     acknowledgement:
       "You're holding noticeable tension right now. Pausing for a mindful exercise can help release that tightness.",
     next_step:
-      "Step away from your display for a brief physical stretch before continuing.",
+      "Give yourself a brief moment to drop your shoulders and soften your breath before continuing.",
     now_instruction:
       "Drop your shoulders down away from your ears and soften your jaw right now.",
     why_this_order:
@@ -411,30 +421,65 @@ export const MOOD_DEFAULT_FALLBACKS: Record<Mood, GuidanceResult> = {
 
 /**
  * Returns situation-specific fallback acknowledgement, next_step, need, now_instruction, why_this_order, and suggestions.
+ * Honest Rules Mode: uses specific templates ONLY for the 6 high-confidence situations
+ * (sleep, exam, conflict, loneliness, romance, money). Unmatched notes get pure mood-based calming
+ * guidance plus "Turn on AI mode to get suggestions based on your note."
  */
 export function getFallbackGuidance(
   mood: Mood,
-  detectedThemes: Theme[] = [],
+  _detectedThemes: Theme[] = [],
   note?: string | null
 ): GuidanceResult {
-  const primaryTheme = selectPrimaryTheme(detectedThemes);
-  const suggestions = getFallbackSuggestions(mood, primaryTheme ? [primaryTheme] : detectedThemes);
-  const situation = getFallbackSituation(mood, detectedThemes, note);
+  const hasNote = Boolean(note && typeof note === 'string' && note.trim().length > 0);
+  const matchedSituation = hasNote ? matchHighConfidenceSituation(note) : null;
+  const matchedTheme = matchedSituation ? highConfidenceToTheme(matchedSituation) : undefined;
+  const suggestions = getFallbackSuggestions(
+    mood,
+    matchedTheme ? [matchedTheme] : []
+  );
+  const situation = getFallbackSituation(mood, matchedTheme ? [matchedTheme] : [], note);
 
-  // If specific non-general theme detected
-  if (primaryTheme && primaryTheme !== 'general') {
-    const template = THEME_FALLBACK_TEMPLATES[primaryTheme];
+  if (matchedSituation && matchedTheme) {
+    const template = THEME_FALLBACK_TEMPLATES[matchedTheme];
     if (template) {
+      const romanceAckOverrides: Record<Mood, string> = {
+        Anxious:
+          "Romantic uncertainty can stir up real worry and vulnerability. It makes sense to feel unsettled when a close connection feels tense.",
+        Stressed:
+          "Navigating strain in a romantic relationship carries real emotional weight. Stepping back for a breath gives you room to recenter.",
+        Overwhelmed:
+          "When romantic feelings or expectations feel intense, feeling emotionally swamped is completely understandable.",
+        Sad:
+          "Heartache or distance in a romantic relationship hurts deeply. Offer yourself gentle patience right now.",
+        Okay:
+          "Staying calm and grounded around a romantic connection supports thoughtful, respectful communication.",
+      };
+
+      const acknowledgement =
+        matchedSituation === 'romance'
+          ? romanceAckOverrides[mood] || romanceAckOverrides.Stressed
+          : template.acknowledgements[mood] || template.acknowledgements.Stressed;
+
       return {
-        acknowledgement: template.acknowledgements[mood] || template.acknowledgements.Stressed,
-        next_step: template.next_step,
+        acknowledgement,
+        next_step:
+          matchedSituation === 'romance'
+            ? 'Give yourself twenty quiet minutes before replying to any tense message.'
+            : template.next_step,
         need: template.need,
-        now_instruction: NOW_INSTRUCTION_TEMPLATES[primaryTheme][mood],
-        why_this_order: WHY_THIS_ORDER_TEMPLATES[primaryTheme][mood],
+        now_instruction: NOW_INSTRUCTION_TEMPLATES[matchedTheme][mood],
+        why_this_order: WHY_THIS_ORDER_TEMPLATES[matchedTheme][mood],
         suggestions,
         situation,
+        matched_situation: matchedSituation,
+        note_interpreted: true,
         understanding: {
-          main_concern: note?.trim() || `${primaryTheme} situation`,
+          main_concern: `${matchedSituation} support while feeling ${mood.toLowerCase()}`,
+          urgency: matchedSituation === 'sleep' ? 'high' : 'medium',
+          time_context: matchedSituation === 'sleep' ? 'late night or trouble sleeping' : '',
+          constraints: matchedSituation === 'sleep' ? ['rest comes first', 'avoid stimulating work'] : [],
+          what_not_to_suggest:
+            matchedSituation === 'sleep' ? ['studying', 'work', 'screens', 'caffeine', 'focus sprint'] : [],
           intensity: 'medium',
           need: template.need,
         },
@@ -442,21 +487,28 @@ export function getFallbackGuidance(
     }
   }
 
-  // If note has text but no theme triggered (or only 'general')
-  if (note && note.trim().length > 0) {
-    const general = THEME_FALLBACK_TEMPLATES.general;
+  // Unmatched non-empty note: honest mood-based calming steps without pretending to interpret the note
+  if (hasNote) {
+    const fallback = MOOD_DEFAULT_FALLBACKS[mood] || MOOD_DEFAULT_FALLBACKS.Okay;
+    const baseAck = THEME_FALLBACK_TEMPLATES.general.acknowledgements[mood] || fallback.acknowledgement;
     return {
-      acknowledgement: `${general.acknowledgements[mood] || general.acknowledgements.Stressed} Add a little more detail in your note and the plan can be more specific.`,
-      next_step: general.next_step,
-      need: general.need,
+      acknowledgement: `${baseAck} ${UNMATCHED_RULES_NOTE_LINE}`,
+      next_step: 'Choose one calm, mood-based activity below that feels gentle right now.',
+      need: fallback.need,
       now_instruction: NOW_INSTRUCTION_TEMPLATES.general[mood],
       why_this_order: WHY_THIS_ORDER_TEMPLATES.general[mood],
       suggestions,
       situation,
+      matched_situation: null,
+      note_interpreted: false,
       understanding: {
-        main_concern: note.trim(),
+        main_concern: `Feeling ${mood.toLowerCase()} (mood-based support)`,
+        urgency: 'medium',
+        time_context: '',
+        constraints: [],
+        what_not_to_suggest: [],
         intensity: 'medium',
-        need: general.need,
+        need: fallback.need,
       },
     };
   }
@@ -467,8 +519,14 @@ export function getFallbackGuidance(
     ...fallback,
     suggestions,
     situation,
+    matched_situation: null,
+    note_interpreted: false,
     understanding: {
       main_concern: `Feeling ${mood.toLowerCase()}`,
+      urgency: 'low',
+      time_context: '',
+      constraints: [],
+      what_not_to_suggest: [],
       intensity: 'low',
       need: fallback.need,
     },

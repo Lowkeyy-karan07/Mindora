@@ -296,6 +296,11 @@ export function RecommendationsView({
   const effectiveActionSteps = plan?.later?.action_steps || effectiveSituation?.action_steps || [];
   const effectiveNextStep = plan?.later?.next_step || next_step;
   const laterSource = plan?.later?.by || sitSource;
+  const isNoteInterpreted = Boolean(
+    hasNote &&
+      (plan?.note_interpreted ??
+        (ackSource === 'ai' || sitSource === 'ai'))
+  );
 
   return (
     <div className="space-y-6">
@@ -303,9 +308,14 @@ export function RecommendationsView({
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
           Your personal wellbeing plan
         </h2>
-        {hasNote && (
+        {hasNote && isNoteInterpreted && (
           <p className="text-slate-600 text-xs sm:text-sm font-medium">
             Based on what you wrote and how you feel
+          </p>
+        )}
+        {hasNote && !isNoteInterpreted && (
+          <p className="text-slate-600 text-xs sm:text-sm font-medium">
+            Turn on AI mode to get suggestions based on your note.
           </p>
         )}
       </div>
