@@ -25,7 +25,11 @@ import {
   scoreCandidates,
   ScoredActivity,
 } from './rules';
-import { getFallbackGuidance, selectPrimaryTheme } from './fallbackTemplates';
+import {
+  getFallbackGuidance,
+  highConfidenceToTheme,
+  matchHighConfidenceSituation,
+} from './fallbackTemplates';
 
 export type MoodGoal = 'calm' | 'lift';
 
@@ -95,7 +99,7 @@ export function isGeneralPurpose(activity: Activity): boolean {
 
 function normalizeScoredCandidates(
   mood: Mood,
-  themes: Theme[] = [],
+  _themes: Theme[] = [],
   ranked?: ScoredActivity[] | Activity[] | null,
   feedbackMap?:
     | Map<string, Rating>
@@ -103,12 +107,11 @@ function normalizeScoredCandidates(
     | LatestActivityFeedback[]
     | null
 ): ScoredActivity[] {
-  const effectiveThemes = themes.filter((t) => ALLOWED_THEMES_SET.has(t));
-
-  // If no pre-ranked array passed, or raw Activity[] passed, compute fresh via scoreCandidates
+  // POOLS WITHOUT THEMES: buildPools uses mood_fit, feedback, 24h penalty, quick/relief, and constraints only.
+  // Never pass themes into pool scoring so unexpected notes have unbiased pools.
   if (!ranked || !Array.isArray(ranked) || ranked.length === 0) {
     return scoreCandidates(mood, feedbackMap, undefined, {
-      detectedThemes: effectiveThemes,
+      detectedThemes: [],
     });
   }
 
@@ -116,11 +119,10 @@ function normalizeScoredCandidates(
   if (!('score' in firstItem) || typeof firstItem.score !== 'number') {
     return scoreCandidates(mood, feedbackMap, undefined, {
       allActivities: ranked as Activity[],
-      detectedThemes: effectiveThemes,
+      detectedThemes: [],
     });
   }
 
-  // Normalize ScoredActivity[] so explicit feedbackMap and themes args always apply cleanly without double-counting
   const hasExplicitFeedback = Boolean(
     feedbackMap &&
       (feedbackMap instanceof Map
@@ -131,43 +133,33 @@ function normalizeScoredCandidates(
   );
 
   const adjusted = (ranked as ScoredActivity[]).map((item) => {
-    let score = item.score;
-    let rating = item.rating;
-    let matchedTheme = item.matchedTheme;
     const fit = item.activity.mood_fit?.[mood] ?? 0;
+    // Strip any weak theme tie-breaker so pools strictly ignore themes
+    let rating = item.rating;
+    let pref = item.rating
+      ? item.rating === 'yes'
+        ? 2
+        : item.rating === 'a_little'
+        ? 1
+        : -2
+      : 0;
 
     if (hasExplicitFeedback && feedbackMap) {
-      const existingPref = item.rating
-        ? item.rating === 'yes'
-          ? 2
-          : item.rating === 'a_little'
-          ? 1
-          : -2
-        : 0;
       const { preference: newPref, rating: newRating } = extractFeedbackPreference(
         feedbackMap,
         item.activity.id
       );
-      if (newRating !== item.rating || newPref !== existingPref) {
-        score += newPref - existingPref;
-        rating = newRating ?? extractRating(feedbackMap, item.activity.id);
-      }
+      pref = newPref;
+      rating = newRating ?? extractRating(feedbackMap, item.activity.id);
     }
 
-    if (effectiveThemes.length > 0 && fit >= 1) {
-      const targetThemes = item.activity.target_themes || [];
-      const firstMatch = effectiveThemes.find((t) => targetThemes.includes(t));
-      if (!item.matchedTheme && firstMatch) {
-        score += 5;
-        matchedTheme = firstMatch;
-      }
-    }
+    const pureScore = fit * 3 + pref - (item.isRecentlyCompleted ? 1.5 : 0);
 
     return {
       ...item,
-      score,
+      score: pureScore,
       rating,
-      matchedTheme,
+      matchedTheme: undefined,
     };
   });
 
@@ -293,7 +285,9 @@ export function buildPools(
   const now_pool = nowFiltered.slice(0, 5).map((s) => s.activity);
   const nowIds = new Set(now_pool.map((a) => a.id));
 
-  // 2. next_pool: up to 8 other mood-fitting activities excluding now_pool, >= 3 general-purpose
+  // 2. next_pool: up to 8 other mood-fitting activities excluding now_pool,
+  //    balancing >= 3 general-purpose AND diverse situational categories (calm/sleep, interpersonal/comfort, practical)
+  //    so Gemini has sensible choices for any situation without using theme gating.
   const nextEligibleAll = moodEligible.filter((s) => !nowIds.has(s.activity.id));
   const { filtered: nextFiltered, relaxed: nextRelaxed } = filterWithRelaxation(
     nextEligibleAll,
@@ -301,36 +295,53 @@ export function buildPools(
     2
   );
 
-  const top8 = nextFiltered.slice(0, 8);
+  const isWorkOrStudy = (a: Activity): boolean =>
+    Boolean(a.tags?.some((t) => t === 'work' || t === 'study' || t === 'focus_sprint'));
+  const isRestOrCalmNonWork = (a: Activity): boolean =>
+    !isWorkOrStudy(a) &&
+    Boolean(
+      a.tags?.some((t) => t === 'sleep' || t === 'rest' || t === 'calm') ||
+        a.type === 'breathing' ||
+        a.type === 'grounding'
+    );
+  const isInterpersonalOrComfort = (a: Activity): boolean =>
+    Boolean(
+      a.tags?.some((t) => t === 'conflict' || t === 'social' || t === 'comfort' || t === 'communication') ||
+        a.target_themes?.some((t) => t === 'conflict' || t === 'relationships' || t === 'loneliness')
+    );
+
+  const selectedIds = new Set<string>();
+  const selectedNextScored: ScoredActivity[] = [];
+  const tryAddNext = (item: ScoredActivity | undefined) => {
+    if (!item || selectedNextScored.length >= 8 || selectedIds.has(item.activity.id)) return;
+    selectedIds.add(item.activity.id);
+    selectedNextScored.push(item);
+  };
+
+  // Seed diverse situational anchors (if present in mood-eligible pool)
+  tryAddNext(nextFiltered.find((s) => s.activity.target_themes?.includes('sleep') || s.activity.tags?.includes('sleep')));
+  tryAddNext(nextFiltered.find((s) => isRestOrCalmNonWork(s.activity)));
+  tryAddNext(nextFiltered.find((s) => isInterpersonalOrComfort(s.activity)));
+
+  // Ensure at least 3 general-purpose activities
   const generalInNextEligible = nextFiltered.filter((s) => isGeneralPurpose(s.activity));
-  const targetGeneralCount = Math.min(3, generalInNextEligible.length);
-  const generalInTop8 = top8.filter((s) => isGeneralPurpose(s.activity));
-
-  let selectedNextScored = [...top8];
-  if (generalInTop8.length < targetGeneralCount) {
-    const top8Ids = new Set(selectedNextScored.map((s) => s.activity.id));
-    const missingCount = targetGeneralCount - generalInTop8.length;
-    const extraGenerals = generalInNextEligible
-      .filter((s) => !top8Ids.has(s.activity.id))
-      .slice(0, missingCount);
-
-    // Replace lowest-ranked non-general items in selectedNextScored
-    let replaceIdx = selectedNextScored.length - 1;
-    for (const extra of extraGenerals) {
-      while (replaceIdx >= 0 && isGeneralPurpose(selectedNextScored[replaceIdx].activity)) {
-        replaceIdx--;
-      }
-      if (replaceIdx >= 0) {
-        selectedNextScored[replaceIdx] = extra;
-        replaceIdx--;
-      }
-    }
-
-    selectedNextScored.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return a.activity.id.localeCompare(b.activity.id);
-    });
+  for (const gen of generalInNextEligible) {
+    const currentGeneralCount = selectedNextScored.filter((s) => isGeneralPurpose(s.activity)).length;
+    if (currentGeneralCount >= Math.min(3, generalInNextEligible.length)) break;
+    tryAddNext(gen);
   }
+
+  // Fill remaining slots up to 8 by highest score, keeping at least 1 practical/work/focus item if available
+  tryAddNext(nextFiltered.find((s) => isWorkOrStudy(s.activity)));
+  for (const item of nextFiltered) {
+    if (selectedNextScored.length >= 8) break;
+    tryAddNext(item);
+  }
+
+  selectedNextScored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.activity.id.localeCompare(b.activity.id);
+  });
 
   const next_pool = selectedNextScored.map((s) => s.activity);
 
@@ -384,7 +395,7 @@ function buildRulesReason(
   activity: Activity,
   mood: Mood,
   scoredMap: Map<string, ScoredActivity>,
-  primaryTheme?: Theme
+  matchedSituationTheme?: Theme
 ): string {
   const scored = scoredMap.get(activity.id);
   const rawReason = generateTemplatedReason(
@@ -392,9 +403,304 @@ function buildRulesReason(
     mood,
     scored?.rating,
     scored ? scored.isMoodMatch : true,
-    scored?.matchedTheme || (primaryTheme && activity.target_themes?.includes(primaryTheme) ? primaryTheme : undefined)
+    matchedSituationTheme && activity.target_themes?.includes(matchedSituationTheme)
+      ? matchedSituationTheme
+      : undefined
   );
   return trimToMaxWords(rawReason, 25);
+}
+
+// --------------------------------------------------------------------------
+// CODE-SIDE GUARDS (what_not_to_suggest + universal late-night guard)
+// --------------------------------------------------------------------------
+
+const WORK_OR_STUDY_TAGS = new Set(['work', 'study', 'focus_sprint']);
+
+export function isWorkOrStudyActivity(activity: Activity): boolean {
+  if (activity.tags?.some((t) => WORK_OR_STUDY_TAGS.has(t.toLowerCase()))) {
+    return true;
+  }
+  if (/focus[\s_-]*sprint/i.test(activity.id) || /focus[\s_-]*sprint/i.test(activity.title)) {
+    return true;
+  }
+  return false;
+}
+
+const LATE_NIGHT_OR_SLEEPLESS_REGEX =
+  /\b(can(?:'|no)?t\s+sleep|cannot\s+sleep|unable\s+to\s+sleep|hard\s+to\s+sleep|struggling\s+to\s+sleep|insomnia|sleepless|wide\s+awake|lying\s+awake|staying\s+awake|restless\s+night|(?:1[0-2]|0?[1-5])\s*(?::\d{2})?\s*a\.?m\.?|midnight|late\s+night|late-night|middle\s+of\s+the\s+night)\b/i;
+
+export function isLateNightOrSleeplessContext(
+  note?: string | null,
+  timeContext?: string | null,
+  mainConcern?: string | null,
+  whatNotToSuggest?: string[] | null
+): boolean {
+  const combined = [note || '', timeContext || '', mainConcern || '', ...(whatNotToSuggest || [])]
+    .join(' ')
+    .trim();
+  if (!combined) return false;
+  return LATE_NIGHT_OR_SLEEPLESS_REGEX.test(combined);
+}
+
+const AVOIDANCE_FRAMING_REGEX =
+  /\b(avoid|no|don't|do not|stop|skip|without|away from|face down|put .{0,20} down|close|mute|turn off|set .{0,20} aside|park .{0,20} for|leave .{0,20} for|wait until|instead of)\b/i;
+
+const FORBIDDEN_STOPWORDS = new Set([
+  'the',
+  'and',
+  'for',
+  'with',
+  'from',
+  'any',
+  'more',
+  'new',
+  'right',
+  'now',
+  'tonight',
+  'today',
+  'late',
+  'night',
+  'before',
+  'heavy',
+  'intense',
+  'extra',
+  'doing',
+  'things',
+  'stuff',
+  'tasks',
+]);
+
+interface ConceptRule {
+  trigger: RegExp;
+  activityCheck: (act: Activity) => boolean;
+  textRegex: RegExp;
+}
+
+const CONCEPT_GUARD_RULES: ConceptRule[] = [
+  {
+    trigger: /\b(study|studying|cram|cramming|homework|coursework|revision|exam\s+prep)\b/i,
+    activityCheck: (act) =>
+      Boolean(act.tags?.some((t) => t === 'study' || t === 'focus_sprint')) ||
+      /\b(study|focus\s*sprint|plan\s*b|one\s*small\s*step)\b/i.test(act.title + ' ' + act.id),
+    textRegex:
+      /\b(study|studying|cram|cramming|homework|coursework|flashcards|syllabus|textbook|review\s+(?:notes|chapters)|memorize|exam\s+prep|focus\s+sprint)\b/i,
+  },
+  {
+    trigger: /\b(work|working|workplace|work\s+tasks|emails|overtime|focus\s*sprint|focus_sprint)\b/i,
+    activityCheck: (act) =>
+      Boolean(act.tags?.some((t) => t === 'work' || t === 'focus_sprint')) ||
+      /\b(focus\s*sprint|draft\s+one\s+clear\s+ask|list\s+who\s+owns|plan\s*b)\b/i.test(act.title),
+    textRegex:
+      /\b(work\s+(?:tasks?|emails?|inbox|projects?|deliverables?)|check\s+(?:email|inbox|slack)|spreadsheets?|office\s+tasks?|focus\s+sprint)\b/i,
+  },
+  {
+    trigger: /\b(new\s+tasks?|to-?do\s+lists?|planning|productivity)\b/i,
+    activityCheck: (act) => isWorkOrStudyActivity(act),
+    textRegex:
+      /\b(start\s+a\s+new\s+task|add\s+tasks?|tackle\s+your\s+to-?do|focus\s+sprint)\b/i,
+  },
+  {
+    trigger: /\b(caffeine|coffee|energy\s*drinks?|espresso)\b/i,
+    activityCheck: () => false,
+    textRegex: /\b(caffeine|coffee|espresso|energy\s*drinks?|caffeinated|black\s+tea|green\s+tea)\b/i,
+  },
+  {
+    trigger: /\b(screens?|phones?|devices?|scrolling|social\s*media|laptop|blue\s*light)\b/i,
+    activityCheck: (act) =>
+      Boolean(act.tags?.some((t) => t === 'phone' || t === 'screen_break')) ||
+      /\b(screen|message\s+one\s+friend|reach\s+out\s+to\s+one\s+person)\b/i.test(act.title),
+    textRegex:
+      /\b(scroll|social\s*media|browse\s+online|watch\s+(?:tv|videos?)|text\s+(?:a\s+friend|someone)|send\s+(?:a\s+)?(?:text|message|emoji)|check\s+your\s+phone|use\s+your\s+(?:phone|laptop|computer)|open\s+(?:tabs|app|website))\b/i,
+  },
+  {
+    trigger: /\b(breathing|breathwork)\b/i,
+    activityCheck: (act) =>
+      act.type === 'breathing' || Boolean(act.tags?.includes('breathing')),
+    textRegex: /\b(box\s+breathing|4-7-8\s+breathing|physiological\s+sigh|breathing\s+exercise)\b/i,
+  },
+  {
+    trigger: /\b(grounding)\b/i,
+    activityCheck: (act) =>
+      act.type === 'grounding' || Boolean(act.tags?.includes('grounding')),
+    textRegex: /\b(5-4-3-2-1\s+grounding|grounding\s+exercise)\b/i,
+  },
+  {
+    trigger: /\b(journaling|journal|writing)\b/i,
+    activityCheck: (act) => act.type === 'journaling',
+    textRegex: /\b(journaling\s+exercise|brain\s+dump|write\s+an\s+unsent)\b/i,
+  },
+  {
+    trigger: /\b(exercise|workout|cardio|running|stretching|intense\s+exercise)\b/i,
+    activityCheck: (act) =>
+      Boolean(act.tags?.includes('movement')) ||
+      /\b(stretch|movement)\b/i.test(act.title),
+    textRegex: /\b(intense\s+exercise|cardio|workout|running|jogging|stand\s+and\s+stretch|shoulder\s+release\s+stretch)\b/i,
+  },
+  {
+    trigger: /\b(confrontation|arguing|angry\s+reply|texting|messaging)\b/i,
+    activityCheck: (act) =>
+      Boolean(act.tags?.some((t) => t === 'social' || t === 'communication')) ||
+      /\b(message\s+one\s+friend|reach\s+out|draft\s+one\s+clear\s+ask|pick\s+your\s+conversation)\b/i.test(
+        act.title
+      ),
+    textRegex: /\b(confront|argue\s+now|reply\s+immediately|send\s+(?:an\s+)?angry|demand\s+answers)\b/i,
+  },
+];
+
+function escapeGuardRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function isSentencePositivelyMatching(text: string, regex: RegExp): boolean {
+  const clauses = text.split(/[.!?;]+/);
+  for (const clause of clauses) {
+    const trimmed = clause.trim();
+    if (!trimmed) continue;
+    if (regex.test(trimmed) && !AVOIDANCE_FRAMING_REGEX.test(trimmed)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function contradictsWhatNotToSuggest(
+  target: Activity | string,
+  whatNotToSuggest: string[] = []
+): boolean {
+  if (!whatNotToSuggest || whatNotToSuggest.length === 0) return false;
+
+  const forbiddenItems = whatNotToSuggest
+    .map((s) => (typeof s === 'string' ? s.trim() : ''))
+    .filter(Boolean);
+  if (forbiddenItems.length === 0) return false;
+
+  if (typeof target !== 'string') {
+    const activity = target;
+    const actText = [
+      activity.type,
+      activity.title,
+      activity.id.replace(/-/g, ' '),
+      ...(activity.tags || []),
+      activity.description || '',
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    for (const forbidden of forbiddenItems) {
+      let matchedRule = false;
+      for (const rule of CONCEPT_GUARD_RULES) {
+        if (rule.trigger.test(forbidden)) {
+          matchedRule = true;
+          if (rule.activityCheck(activity)) {
+            return true;
+          }
+        }
+      }
+
+      if (!matchedRule) {
+        const words = forbidden
+          .toLowerCase()
+          .split(/[^a-z0-9_]+/)
+          .filter((w) => w.length >= 4 && !FORBIDDEN_STOPWORDS.has(w));
+        for (const w of words) {
+          const rx = new RegExp(`\\b${escapeGuardRegExp(w)}\\b`, 'i');
+          if (rx.test(actText)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  // String target (now.instruction or action step text)
+  const text = target.trim();
+  if (!text) return false;
+
+  for (const forbidden of forbiddenItems) {
+    let matchedRule = false;
+    for (const rule of CONCEPT_GUARD_RULES) {
+      if (rule.trigger.test(forbidden)) {
+        matchedRule = true;
+        if (isSentencePositivelyMatching(text, rule.textRegex)) {
+          return true;
+        }
+      }
+    }
+
+    if (!matchedRule) {
+      const words = forbidden
+        .toLowerCase()
+        .split(/[^a-z0-9_]+/)
+        .filter((w) => w.length >= 4 && !FORBIDDEN_STOPWORDS.has(w));
+      for (const w of words) {
+        const rx = new RegExp(`\\b${escapeGuardRegExp(w)}\\b`, 'i');
+        if (isSentencePositivelyMatching(text, rx)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+const SAFE_STEP_POOL: Array<{ step: string; detail: string }> = [
+  {
+    step: 'Pause for sixty quiet seconds',
+    detail: 'Let your shoulders drop and take three slow, unhurried breaths right where you are.',
+  },
+  {
+    step: 'Anchor with gentle touch',
+    detail: 'Rest both feet flat on the floor and notice the steady physical support beneath you.',
+  },
+  {
+    step: 'Offer yourself gentle patience',
+    detail: 'Give yourself permission to slow down for tonight and let tomorrow wait.',
+  },
+  {
+    step: 'Dim surrounding room light',
+    detail: 'Soften the lighting around you and let your eyes rest comfortably away from stimulation.',
+  },
+  {
+    step: 'Rest and unwind quietly',
+    detail: 'Choose the quietest, lowest-effort comfort nearby so your body can settle.',
+  },
+];
+
+function pickSafeStepReplacement(
+  time: 'now' | 'today' | 'this_week',
+  whatNotToSuggest: string[],
+  usedSteps: Set<string>,
+  fallbackCandidate?: SituationActionStep
+): SituationActionStep {
+  if (
+    fallbackCandidate &&
+    isTextSafeForPlan(fallbackCandidate.step) &&
+    isTextSafeForPlan(fallbackCandidate.detail) &&
+    !contradictsWhatNotToSuggest(fallbackCandidate.step + ' ' + fallbackCandidate.detail, whatNotToSuggest) &&
+    !usedSteps.has(fallbackCandidate.step.toLowerCase())
+  ) {
+    return {
+      step: fallbackCandidate.step,
+      detail: fallbackCandidate.detail,
+      time,
+    };
+  }
+
+  const safePick = SAFE_STEP_POOL.find(
+    (s) =>
+      !usedSteps.has(s.step.toLowerCase()) &&
+      !contradictsWhatNotToSuggest(s.step + ' ' + s.detail, whatNotToSuggest)
+  );
+  if (safePick) {
+    return { step: safePick.step, detail: safePick.detail, time };
+  }
+  return {
+    step: 'Take one quiet pause',
+    detail: 'Rest quietly for one slow minute without adding any new demands.',
+    time,
+  };
 }
 
 /**
@@ -427,38 +733,37 @@ function canAddWithDiversity(
 
 /**
  * Picks up to 2 deterministic Next items from next_pool.
- * When teamwork/conflict or another situational theme is detected, ensures the first Next item
- * prioritizes a theme-matching practical activity (rather than a purely passive breathing exercise).
+ * Only uses a situational match when Honest Rules Mode matched one of the 6 high-confidence situations,
+ * and enforces the universal late-night guard (never work/study/focus_sprint at night).
  */
 function pickDeterministicNextItems(
   mood: Mood,
-  primaryTheme: Theme | undefined,
+  matchedRuleTheme: Theme | undefined,
   nowAct: Activity,
-  pools: PoolsResult
+  pools: PoolsResult,
+  disallowWorkStudy: boolean = false
 ): PlanNextItem[] {
   const nextPool = pools.next_pool;
   const chosen: Activity[] = [nowAct];
   const nextActivities: Activity[] = [];
+  const isAllowed = (a: Activity) => !disallowWorkStudy || !isWorkOrStudyActivity(a);
 
-  const isInterpersonalOrSituational =
-    Boolean(primaryTheme && primaryTheme !== 'general');
-
-  // Slot 0: if situational theme is present (especially teamwork/conflict), prioritize a theme-matching practical activity
   let slot0: Activity | undefined;
-  if (isInterpersonalOrSituational && primaryTheme) {
-    // Prefer practical journaling/break matching primaryTheme first
+  if (matchedRuleTheme && matchedRuleTheme !== 'general') {
     slot0 =
       nextPool.find(
         (a) =>
           !chosen.some((c) => c.id === a.id) &&
-          a.target_themes?.includes(primaryTheme) &&
+          isAllowed(a) &&
+          a.target_themes?.includes(matchedRuleTheme) &&
           (a.type === 'journaling' || a.type === 'break') &&
           canAddWithDiversity(a, chosen, mood)
       ) ||
       nextPool.find(
         (a) =>
           !chosen.some((c) => c.id === a.id) &&
-          a.target_themes?.includes(primaryTheme) &&
+          isAllowed(a) &&
+          a.target_themes?.includes(matchedRuleTheme) &&
           canAddWithDiversity(a, chosen, mood)
       );
   }
@@ -467,8 +772,18 @@ function pickDeterministicNextItems(
     slot0 =
       nextPool.find(
         (a) =>
-          !chosen.some((c) => c.id === a.id) && canAddWithDiversity(a, chosen, mood)
-      ) || nextPool.find((a) => !chosen.some((c) => c.id === a.id));
+          !chosen.some((c) => c.id === a.id) &&
+          isAllowed(a) &&
+          canAddWithDiversity(a, chosen, mood)
+      ) ||
+      nextPool.find((a) => !chosen.some((c) => c.id === a.id) && isAllowed(a)) ||
+      getAllActivities().find(
+        (a) =>
+          !chosen.some((c) => c.id === a.id) &&
+          isAllowed(a) &&
+          (a.mood_fit?.[mood] ?? 0) >= 1 &&
+          canAddWithDiversity(a, chosen, mood)
+      );
   }
 
   if (slot0) {
@@ -476,22 +791,31 @@ function pickDeterministicNextItems(
     nextActivities.push(slot0);
   }
 
-  // Slot 1: next highest-ranked respecting diversity & no duplicates
-  let slot1 = nextPool.find(
-    (a) => !chosen.some((c) => c.id === a.id) && canAddWithDiversity(a, chosen, mood)
-  );
-  if (!slot1) {
-    slot1 = nextPool.find((a) => !chosen.some((c) => c.id === a.id));
-  }
+  let slot1 =
+    nextPool.find(
+      (a) =>
+        !chosen.some((c) => c.id === a.id) &&
+        isAllowed(a) &&
+        canAddWithDiversity(a, chosen, mood)
+    ) ||
+    nextPool.find((a) => !chosen.some((c) => c.id === a.id) && isAllowed(a)) ||
+    getAllActivities().find(
+      (a) =>
+        !chosen.some((c) => c.id === a.id) &&
+        isAllowed(a) &&
+        (a.mood_fit?.[mood] ?? 0) >= 1 &&
+        canAddWithDiversity(a, chosen, mood)
+    );
 
   if (slot1) {
     chosen.push(slot1);
     nextActivities.push(slot1);
   }
 
-  // Final safety net in case pools are severely constrained in synthetic tests
   if (nextActivities.length < 2) {
-    const fallbackAll = getAllActivities().filter((a) => !chosen.some((c) => c.id === a.id));
+    const fallbackAll = getAllActivities().filter(
+      (a) => !chosen.some((c) => c.id === a.id) && isAllowed(a)
+    );
     for (const f of fallbackAll) {
       if (nextActivities.length >= 2) break;
       nextActivities.push(f);
@@ -501,14 +825,14 @@ function pickDeterministicNextItems(
 
   return nextActivities.map((act) => ({
     activity: act,
-    reason: buildRulesReason(act, mood, pools.scoredMap, primaryTheme),
+    reason: buildRulesReason(act, mood, pools.scoredMap, matchedRuleTheme),
     by: 'rules',
     personalised_by: 'rules',
   }));
 }
 
 /**
- * Builds the complete deterministic fallback plan from pools and mood x theme templates.
+ * Builds the complete deterministic fallback plan from pools and Honest Rules templates.
  */
 export function buildRulesPlan(
   mood: Mood,
@@ -519,24 +843,48 @@ export function buildRulesPlan(
 ): WellbeingPlan {
   const pools =
     poolsInput ||
-    buildPools(mood, detectedThemes, undefined, undefined, options?.constraints);
+    buildPools(mood, [], undefined, undefined, options?.constraints);
 
-  const primaryTheme = selectPrimaryTheme(detectedThemes);
+  const matchedSituation = matchHighConfidenceSituation(note);
+  const matchedRuleTheme = matchedSituation ? highConfidenceToTheme(matchedSituation) : undefined;
   const guidance = getFallbackGuidance(mood, detectedThemes, note);
+
+  const disallowWorkStudy = isLateNightOrSleeplessContext(
+    note,
+    guidance.understanding?.time_context,
+    guidance.understanding?.main_concern,
+    guidance.understanding?.what_not_to_suggest
+  );
+
+  const validNowPool = pools.now_pool.filter(
+    (a) => !disallowWorkStudy || !isWorkOrStudyActivity(a)
+  );
+  const effectiveNowPool =
+    validNowPool.length > 0
+      ? validNowPool
+      : getAllActivities().filter(
+          (a) =>
+            isQuickActivity(a) &&
+            (a.mood_fit?.[mood] ?? 0) >= 1 &&
+            (!disallowWorkStudy || !isWorkOrStudyActivity(a))
+        );
 
   let nowAct =
     options?.intensity === 'high'
-      ? findGentlestQuickActivity(pools.now_pool, mood) || pools.now_pool[0]
-      : pools.now_pool[0];
+      ? findGentlestQuickActivity(effectiveNowPool, mood) || effectiveNowPool[0]
+      : effectiveNowPool[0];
 
   if (!nowAct) {
-    const fallbackQuick = getAllActivities().find((a) => isQuickActivity(a)) || getAllActivities()[0];
+    const fallbackQuick =
+      getAllActivities().find(
+        (a) => isQuickActivity(a) && (!disallowWorkStudy || !isWorkOrStudyActivity(a))
+      ) || getAllActivities()[0];
     nowAct = fallbackQuick;
   }
 
   const nowItem: PlanNowItem = {
     activity: nowAct,
-    reason: buildRulesReason(nowAct, mood, pools.scoredMap, primaryTheme),
+    reason: buildRulesReason(nowAct, mood, pools.scoredMap, matchedRuleTheme),
     instruction: trimToMaxWords(
       guidance.now_instruction ||
         `Pause briefly for sixty seconds and follow ${nowAct.title}.`,
@@ -546,7 +894,13 @@ export function buildRulesPlan(
     personalised_by: 'rules',
   };
 
-  const nextItems = pickDeterministicNextItems(mood, primaryTheme, nowAct, pools);
+  const nextItems = pickDeterministicNextItems(
+    mood,
+    matchedRuleTheme,
+    nowAct,
+    pools,
+    disallowWorkStudy
+  );
 
   const situation = guidance.situation!;
   const later: PlanLater = {
@@ -571,7 +925,8 @@ export function buildRulesPlan(
     now: nowItem,
     next: nextItems,
     later,
-    relevant_themes: detectedThemes,
+    relevant_themes: matchedRuleTheme ? [matchedRuleTheme] : [],
+    note_interpreted: Boolean(guidance.note_interpreted),
   };
 }
 
@@ -579,11 +934,19 @@ export function buildRulesPlan(
 // CODE VALIDATION FOR AI-DECIDED PLANS (validatePlan)
 // --------------------------------------------------------------------------
 
-const understandingSchema = z.object({
-  main_concern: z.string().min(1),
-  intensity: z.enum(['low', 'medium', 'high']),
-  need: z.enum(NEEDS),
-});
+const understandingSchema = z
+  .object({
+    main_concern: z.string().min(1),
+    urgency: z.enum(['low', 'medium', 'high']).optional(),
+    intensity: z.enum(['low', 'medium', 'high']).optional(),
+    time_context: z.string().optional().default(''),
+    constraints: z.array(z.string()).optional().default([]),
+    what_not_to_suggest: z.array(z.string()).optional().default([]),
+    need: z.enum(NEEDS).optional(),
+  })
+  .refine((u) => Boolean(u.urgency || u.intensity), {
+    message: 'Either urgency or intensity is required',
+  });
 
 const actionStepSchema = z.object({
   step: z
@@ -633,11 +996,14 @@ export function validatePlan(
   const { mood, note, detectedThemes, pools } = params;
   const baseRulesPlan =
     params.rulesPlan || buildRulesPlan(mood, detectedThemes, note, pools);
+  const hasNote = Boolean(note && typeof note === 'string' && note.trim().length > 0);
+  const matchedSituation = hasNote ? matchHighConfidenceSituation(note) : null;
+  const matchedRuleTheme = matchedSituation ? highConfidenceToTheme(matchedSituation) : undefined;
 
   if (!rawAi || typeof rawAi !== 'object' || Array.isArray(rawAi)) {
     return {
       plan: baseRulesPlan,
-      relevant_themes: detectedThemes,
+      relevant_themes: [],
       understanding_valid: false,
       any_ai_used: false,
     };
@@ -646,32 +1012,66 @@ export function validatePlan(
   const raw = rawAi as Record<string, unknown>;
   const nowPoolMap = new Map<string, Activity>(pools.now_pool.map((a) => [a.id, a]));
   const nextPoolMap = new Map<string, Activity>(pools.next_pool.map((a) => [a.id, a]));
-  const primaryTheme = selectPrimaryTheme(detectedThemes);
 
-  // 1. relevant_themes: filter strictly against allowed THEMES list
+  // 1. relevant_themes: optional and informational only (never a gate)
   let finalThemes: Theme[] = [];
   if (Array.isArray(raw.relevant_themes)) {
     finalThemes = raw.relevant_themes
       .filter((t): t is Theme => typeof t === 'string' && ALLOWED_THEMES_SET.has(t))
       .slice(0, 3);
   }
-  const mergedThemes =
-    finalThemes.length > 0
-      ? finalThemes
-      : detectedThemes;
 
-  // 2. understanding
+  // 2. open-ended understanding
   let finalUnderstanding: Understanding = baseRulesPlan.understanding!;
   let understandingValid = false;
   const uParse = understandingSchema.safeParse(raw.understanding);
   if (uParse.success && isTextSafeForPlan(uParse.data.main_concern)) {
-    finalUnderstanding = uParse.data;
+    const resolvedUrgency = uParse.data.urgency ?? uParse.data.intensity ?? 'medium';
+    const cleanWhatNot = (uParse.data.what_not_to_suggest || [])
+      .filter((w) => typeof w === 'string' && w.trim().length > 0)
+      .map((w) => w.trim())
+      .slice(0, 12);
+    const cleanConstraints = (uParse.data.constraints || [])
+      .filter((c) => typeof c === 'string' && c.trim().length > 0)
+      .map((c) => c.trim())
+      .slice(0, 10);
+
+    finalUnderstanding = {
+      main_concern: uParse.data.main_concern.trim(),
+      urgency: resolvedUrgency,
+      intensity: uParse.data.intensity ?? resolvedUrgency,
+      time_context: (uParse.data.time_context || '').trim(),
+      constraints: cleanConstraints,
+      what_not_to_suggest: cleanWhatNot,
+      need: uParse.data.need ?? baseRulesPlan.understanding?.need ?? 'calm',
+    };
     understandingValid = true;
   }
 
-  const isHighIntensity = finalUnderstanding.intensity === 'high';
+  const whatNotToSuggest = finalUnderstanding.what_not_to_suggest || [];
+  const disallowWorkStudy = isLateNightOrSleeplessContext(
+    note,
+    finalUnderstanding.time_context,
+    finalUnderstanding.main_concern,
+    whatNotToSuggest
+  );
+
+  const isActivityAllowed = (act: Activity): boolean => {
+    if (disallowWorkStudy && isWorkOrStudyActivity(act)) return false;
+    if (contradictsWhatNotToSuggest(act, whatNotToSuggest)) return false;
+    return true;
+  };
+
+  const isTextAllowed = (text: unknown): text is string => {
+    if (typeof text !== 'string' || !isTextSafeForPlan(text)) return false;
+    if (contradictsWhatNotToSuggest(text, whatNotToSuggest)) return false;
+    return true;
+  };
+
+  const isHighIntensity =
+    finalUnderstanding.urgency === 'high' || finalUnderstanding.intensity === 'high';
   const rulesPlan = isHighIntensity
-    ? buildRulesPlan(mood, mergedThemes, note, pools, { intensity: 'high' })
+    ? buildRulesPlan(mood, detectedThemes, note, pools, { intensity: 'high' })
     : baseRulesPlan;
 
   // 3. acknowledgement (max 60 words, safe)
@@ -690,21 +1090,44 @@ export function validatePlan(
     whyOrderBy = 'ai';
   }
 
-  // 5. now item (must be in now_pool, quick, safe reason <= 25w, safe instruction <= 25w, gentlest if high intensity)
-  let finalNow: PlanNowItem = rulesPlan.now;
-  const rawNow = raw.now as Record<string, unknown> | undefined;
-  const gentlestQuick = findGentlestQuickActivity(pools.now_pool, mood);
+  // 5. now item (must be in now_pool, quick, pass what_not_to_suggest & late-night guards, gentlest if high urgency/intensity)
+  const validNowCandidates = pools.now_pool.filter(isActivityAllowed);
+  const catalogQuickFallback = getAllActivities().filter(
+    (a) => isQuickActivity(a) && (a.mood_fit?.[mood] ?? 0) >= 1 && isActivityAllowed(a)
+  );
+  const gentlestValidQuick =
+    findGentlestQuickActivity(validNowCandidates, mood) ||
+    findGentlestQuickActivity(catalogQuickFallback, mood) ||
+    findGentlestQuickActivity(pools.now_pool, mood) ||
+    rulesPlan.now.activity;
 
+  const safeNowInstruction = isTextAllowed(rulesPlan.now.instruction)
+    ? rulesPlan.now.instruction
+    : `Pause quietly for sixty seconds and follow ${gentlestValidQuick.title}.`;
+
+  let finalNow: PlanNowItem = {
+    ...rulesPlan.now,
+    activity: isActivityAllowed(rulesPlan.now.activity)
+      ? rulesPlan.now.activity
+      : gentlestValidQuick,
+    reason: isActivityAllowed(rulesPlan.now.activity)
+      ? rulesPlan.now.reason
+      : buildRulesReason(gentlestValidQuick, mood, pools.scoredMap, matchedRuleTheme),
+    instruction: safeNowInstruction,
+  };
+
+  const rawNow = raw.now as Record<string, unknown> | undefined;
   if (rawNow && typeof rawNow === 'object') {
     const actId = typeof rawNow.activity_id === 'string' ? rawNow.activity_id : '';
     const candidateAct = nowPoolMap.get(actId);
-    const isValidQuick = Boolean(candidateAct && isQuickActivity(candidateAct));
+    const isValidQuick = Boolean(
+      candidateAct && isQuickActivity(candidateAct) && isActivityAllowed(candidateAct)
+    );
     const satisfiesHighIntensity =
-      !isHighIntensity || !gentlestQuick || candidateAct?.id === gentlestQuick.id;
+      !isHighIntensity || !gentlestValidQuick || candidateAct?.id === gentlestValidQuick.id;
 
     const reasonOk = isWordValid(rawNow.reason, 25) && isTextSafeForPlan(rawNow.reason);
-    const instructionOk =
-      isWordValid(rawNow.instruction, 25) && isTextSafeForPlan(rawNow.instruction);
+    const instructionOk = isWordValid(rawNow.instruction, 25) && isTextAllowed(rawNow.instruction);
 
     if (candidateAct && isValidQuick && satisfiesHighIntensity && reasonOk && instructionOk) {
       finalNow = {
@@ -715,27 +1138,36 @@ export function validatePlan(
         personalised_by: 'ai',
       };
     } else if (candidateAct && isValidQuick && satisfiesHighIntensity && reasonOk && !instructionOk) {
-      // Activity and reason valid, only instruction failed -> replace instruction with template & mark rules
+      // Activity & reason valid; only instruction failed -> replace ONLY instruction with safe fallback
+      const repairInstruction = isTextAllowed(rulesPlan.now.instruction)
+        ? rulesPlan.now.instruction
+        : `Take sixty calm seconds with ${candidateAct.title}.`;
       finalNow = {
         activity: candidateAct,
         reason: (rawNow.reason as string).trim(),
-        instruction: rulesPlan.now.instruction,
+        instruction: trimToMaxWords(repairInstruction, 25),
         by: 'rules',
         personalised_by: 'rules',
       };
-    } else if (isHighIntensity && gentlestQuick) {
-      // Force gentlest in now_pool if intensity high and AI picked non-gentlest or invalid
+    } else {
+      // Replace invalid/violating now activity with ranker's gentlest valid quick choice
+      const safeFallbackAct = gentlestValidQuick;
       finalNow = {
-        activity: gentlestQuick,
-        reason: buildRulesReason(gentlestQuick, mood, pools.scoredMap, primaryTheme),
-        instruction: rulesPlan.now.instruction,
+        activity: safeFallbackAct,
+        reason: buildRulesReason(safeFallbackAct, mood, pools.scoredMap, matchedRuleTheme),
+        instruction: trimToMaxWords(
+          isTextAllowed(rulesPlan.now.instruction)
+            ? rulesPlan.now.instruction
+            : `Take sixty calm seconds with ${safeFallbackAct.title}.`,
+          25
+        ),
         by: 'rules',
         personalised_by: 'rules',
       };
     }
   }
 
-  // 6. next items (exactly 2 items from next_pool, no duplicates with now or each other, type cap <= 2, Okay diversity)
+  // 6. next items (exactly 2 items from next_pool, no duplicates, type cap <= 2, Okay diversity, guards)
   const chosenActivities: Activity[] = [finalNow.activity];
   const usedIds = new Set<string>([finalNow.activity.id]);
   const finalNext: PlanNextItem[] = [];
@@ -756,6 +1188,7 @@ export function validatePlan(
         candidateAct &&
         !usedIds.has(candidateAct.id) &&
         canAddWithDiversity(candidateAct, chosenActivities, mood, 3) &&
+        isActivityAllowed(candidateAct) &&
         reasonOk
       ) {
         pickedAiSlot = {
@@ -772,11 +1205,24 @@ export function validatePlan(
       chosenActivities.push(pickedAiSlot.activity);
       finalNext.push(pickedAiSlot);
     } else {
-      // Fallback for ONLY this invalid slot using highest-ranked valid item from next_pool
+      // Replace ONLY this invalid/violating slot using ranker's gentlest valid choice
+      const pickBestValid = (candidates: Activity[]) => {
+        const filtered = candidates.filter(
+          (a) => !usedIds.has(a.id) && isActivityAllowed(a)
+        );
+        // Prefer gentle calming activities (shorter duration / non-work) respecting diversity
+        const withDiv = filtered.filter((a) => canAddWithDiversity(a, chosenActivities, mood, 3));
+        const poolToSort = withDiv.length > 0 ? withDiv : filtered;
+        return poolToSort[0];
+      };
+
+      const moodFittingCatalog = getAllActivities().filter(
+        (a) => (a.mood_fit?.[mood] ?? 0) >= 1
+      );
       const fallbackAct =
-        pools.next_pool.find(
-          (a) => !usedIds.has(a.id) && canAddWithDiversity(a, chosenActivities, mood, 3)
-        ) ||
+        pickBestValid(pools.next_pool) ||
+        pickBestValid(moodFittingCatalog) ||
+        pickBestValid(getAllActivities()) ||
         pools.next_pool.find((a) => !usedIds.has(a.id)) ||
         getAllActivities().find((a) => !usedIds.has(a.id))!;
 
@@ -784,7 +1230,7 @@ export function validatePlan(
       chosenActivities.push(fallbackAct);
       finalNext.push({
         activity: fallbackAct,
-        reason: buildRulesReason(fallbackAct, mood, pools.scoredMap, primaryTheme),
+        reason: buildRulesReason(fallbackAct, mood, pools.scoredMap, matchedRuleTheme),
         by: 'rules',
         personalised_by: 'rules',
       });
@@ -812,25 +1258,42 @@ export function validatePlan(
     situationBy = 'ai';
   }
 
-  // 8. later (3 action_steps + next_step)
+  // 8. later (3 action_steps + next_step), repairing ONLY violating steps if any step contradicts what_not_to_suggest
   let finalSteps: SituationActionStep[] = rulesPlan.later.action_steps;
   let stepsOk = false;
+  let anyStepRepairedByGuard = false;
 
   if (rawSit && typeof rawSit === 'object') {
     const stepsParse = actionStepsArraySchema.safeParse(rawSit.action_steps);
     if (stepsParse.success) {
-      const allStepsSafeAndDistinct = stepsParse.data.every(
+      const structurallySafe = stepsParse.data.every(
         (s) =>
           isTextSafeForPlan(s.step) &&
           isTextSafeForPlan(s.detail) &&
           !chosenTitlesLower.has(s.step.toLowerCase().trim())
       );
-      if (allStepsSafeAndDistinct) {
-        finalSteps = stepsParse.data.map((s) => ({
-          step: s.step.trim(),
-          detail: s.detail.trim(),
-          time: s.time,
-        }));
+      if (structurallySafe) {
+        const usedStepTitles = new Set<string>();
+        finalSteps = stepsParse.data.map((s, idx) => {
+          const combinedStepText = `${s.step.trim()} ${s.detail.trim()}`;
+          if (!contradictsWhatNotToSuggest(combinedStepText, whatNotToSuggest)) {
+            usedStepTitles.add(s.step.trim().toLowerCase());
+            return {
+              step: s.step.trim(),
+              detail: s.detail.trim(),
+              time: s.time,
+            };
+          }
+          anyStepRepairedByGuard = true;
+          const replacement = pickSafeStepReplacement(
+            s.time,
+            whatNotToSuggest,
+            usedStepTitles,
+            rulesPlan.later.action_steps[idx]
+          );
+          usedStepTitles.add(replacement.step.toLowerCase());
+          return replacement;
+        });
         stepsOk = true;
       }
     }
@@ -838,13 +1301,13 @@ export function validatePlan(
 
   let finalNextStep = rulesPlan.later.next_step;
   let nextStepOk = false;
-  if (isWordValid(raw.next_step, 30) && isTextSafeForPlan(raw.next_step)) {
+  if (isWordValid(raw.next_step, 30) && isTextAllowed(raw.next_step)) {
     finalNextStep = (raw.next_step as string).trim();
     nextStepOk = true;
   }
 
-  // If high intensity and AI steps didn't mention reaching out gently, ensure a gentle support step is included cleanly
-  if (isHighIntensity && stepsOk) {
+  // If high intensity/urgency and AI steps didn't mention reaching out gently, ensure a gentle support step
+  if (isHighIntensity && stepsOk && !anyStepRepairedByGuard) {
     const reachOutRegex =
       /\b(reach\s+out|trusted|friend|family|someone|talk\s+to|check\s+in|mentor|advisor|supervisor|teacher|share)\b/i;
     const hasReachOut = finalSteps.some(
@@ -853,23 +1316,41 @@ export function validatePlan(
     if (!hasReachOut) {
       const idx = finalSteps.findIndex((s) => s.time !== 'now');
       if (idx !== -1) {
-        finalSteps[idx] = {
+        const reachCandidate: SituationActionStep = {
           step: 'Reach out to someone trusted',
           detail:
             'When you feel ready, let a trusted friend, family member, or supportive person know things feel heavy today.',
           time: finalSteps[idx].time,
         };
+        if (
+          !contradictsWhatNotToSuggest(
+            `${reachCandidate.step} ${reachCandidate.detail}`,
+            whatNotToSuggest
+          )
+        ) {
+          finalSteps[idx] = reachCandidate;
+        }
       }
     }
   }
 
-  // Check rules: "later = action_steps + next_step" -> if action_steps failed (e.g. wrong count or unsafe terms), fall back later to rules
-  const laterValid = stepsOk && nextStepOk;
+  const laterValid = stepsOk && nextStepOk && !anyStepRepairedByGuard;
   if (!stepsOk) {
-    finalSteps = rulesPlan.later.action_steps;
+    const usedFallbackTitles = new Set<string>();
+    finalSteps = rulesPlan.later.action_steps.map((s) => {
+      if (!contradictsWhatNotToSuggest(`${s.step} ${s.detail}`, whatNotToSuggest)) {
+        usedFallbackTitles.add(s.step.toLowerCase());
+        return s;
+      }
+      const rep = pickSafeStepReplacement(s.time, whatNotToSuggest, usedFallbackTitles);
+      usedFallbackTitles.add(rep.step.toLowerCase());
+      return rep;
+    });
   }
   if (!nextStepOk) {
-    finalNextStep = rulesPlan.later.next_step;
+    finalNextStep = isTextAllowed(rulesPlan.later.next_step)
+      ? rulesPlan.later.next_step
+      : 'Take one quiet, low-effort step that respects your current limits.';
   }
   const laterBy: 'ai' | 'rules' = laterValid ? 'ai' : 'rules';
 
@@ -886,6 +1367,10 @@ export function validatePlan(
     finalNow.by === 'ai' ||
     finalNext.some((n) => n.by === 'ai') ||
     laterBy === 'ai';
+
+  const noteInterpreted = Boolean(
+    hasNote && (anyAiUsed || understandingValid || rulesPlan.note_interpreted)
+  );
 
   return {
     plan: {
@@ -904,7 +1389,8 @@ export function validatePlan(
         by: laterBy,
         personalised_by: laterBy,
       },
-      relevant_themes: mergedThemes,
+      relevant_themes: finalThemes,
+      note_interpreted: noteInterpreted,
     },
     relevant_themes: finalThemes,
     understanding_valid: understandingValid,

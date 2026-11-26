@@ -23,7 +23,11 @@
       "Hold empty for 4 counts, then repeat softly."
     ],
     "quick": true,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "calm",
+      "breathing"
+    ]
   },
   {
     "id": "4-7-8-breathing",
@@ -48,7 +52,12 @@
       "Repeat this gentle cycle 3 to 4 times."
     ],
     "quick": true,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "sleep",
+      "rest",
+      "calm"
+    ]
   },
   {
     "id": "physiological-sigh",
@@ -73,7 +82,11 @@
       "Repeat 2 to 3 times whenever you feel immediate tightness."
     ],
     "quick": true,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "calm",
+      "breathing"
+    ]
   },
   {
     "id": "5-4-3-2-1-grounding",
@@ -98,7 +111,11 @@
       "Notice 1 thing you can taste or take a mindful sip of water."
     ],
     "quick": false,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "calm",
+      "grounding"
+    ]
   },
   {
     "id": "body-scan",
@@ -124,7 +141,12 @@
       "Take one deep breath appreciating your body just as it is right now."
     ],
     "quick": false,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "sleep",
+      "rest",
+      "calm"
+    ]
   },
   {
     "id": "release-unclench",
@@ -150,7 +172,11 @@
       "Enjoy the subtle feeling of space and lightness."
     ],
     "quick": true,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "calm",
+      "grounding"
+    ]
   },
   {
     "id": "brain-dump",
@@ -175,7 +201,11 @@
       "Acknowledge that your thoughts are now safe outside of your head."
     ],
     "quick": false,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "calm",
+      "reflection"
+    ]
   },
   {
     "id": "one-small-step",
@@ -199,7 +229,10 @@
       "Give yourself permission to ignore everything else until that one step is done."
     ],
     "quick": true,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "work"
+    ]
   },
   {
     "id": "gratitude-moment",
@@ -223,7 +256,11 @@
       "Pause for 30 seconds to genuinely savor the warmth of those moments."
     ],
     "quick": true,
-    "relief": "lift"
+    "relief": "lift",
+    "tags": [
+      "lift",
+      "reflection"
+    ]
   },
   {
     "id": "name-what-you-feel",
@@ -247,7 +284,11 @@
       "Offer yourself patience as you navigate this moment."
     ],
     "quick": true,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "calm",
+      "reflection"
+    ]
   },
   {
     "id": "screen-movement-break",
@@ -273,7 +314,11 @@
       "Return feeling slightly recharged and refreshed."
     ],
     "quick": false,
-    "relief": "both"
+    "relief": "both",
+    "tags": [
+      "movement",
+      "screen_break"
+    ]
   },
   {
     "id": "break-it-into-one-small-step",
@@ -298,7 +343,11 @@
       "Acknowledge that starting is the hardest part, and one step creates forward momentum."
     ],
     "quick": false,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "work",
+      "study"
+    ]
   },
   {
     "id": "25-minute-focus-sprint",
@@ -323,7 +372,12 @@
       "When finished, step away from your desk for a well-deserved 5-minute pause."
     ],
     "quick": false,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "work",
+      "study",
+      "focus_sprint"
+    ]
   },
   {
     "id": "name-worry-park-it",
@@ -351,7 +405,11 @@
       "Take one deep breath and transition your focus back to the present moment."
     ],
     "quick": false,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "calm",
+      "reflection"
+    ]
   },
   {
     "id": "reach-out-to-one-person",
@@ -377,7 +435,12 @@
       "Notice the subtle shift that comes from extending a small connection outward."
     ],
     "quick": false,
-    "relief": "lift"
+    "relief": "lift",
+    "tags": [
+      "lift",
+      "social",
+      "phone"
+    ]
   },
   {
     "id": "sleep-wind-down",
@@ -401,7 +464,12 @@
       "Continue this gentle rhythm until your breathing feels natural, heavy, and calm."
     ],
     "quick": false,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "sleep",
+      "rest",
+      "calm"
+    ]
   },
   {
     "id": "self-kindness-pause",
@@ -427,7 +495,11 @@
       "Remind yourself that doing your best with today's energy is entirely enough."
     ],
     "quick": false,
-    "relief": "lift"
+    "relief": "lift",
+    "tags": [
+      "lift",
+      "comfort"
+    ]
   },
   {
     "id": "small-comfort-act",
@@ -451,7 +523,11 @@
       "Take one deep breath and acknowledge that you deserve kindness today."
     ],
     "quick": false,
-    "relief": "lift"
+    "relief": "lift",
+    "tags": [
+      "lift",
+      "comfort"
+    ]
   },
   {
     "id": "savour-the-moment",
@@ -473,7 +549,11 @@
       "Anchor this feeling with a gentle, appreciative breath."
     ],
     "quick": false,
-    "relief": "lift"
+    "relief": "lift",
+    "tags": [
+      "lift",
+      "grounding"
+    ]
   },
   {
     "id": "set-one-intention",
@@ -498,7 +578,11 @@
       "Keep this intention quietly in mind as you resume your activities."
     ],
     "quick": true,
-    "relief": "both"
+    "relief": "both",
+    "tags": [
+      "work",
+      "study"
+    ]
   },
   {
     "id": "brain-dump-pick-one",
@@ -528,6 +612,10 @@
       "Overwhelmed",
       "Stressed",
       "Okay"
+    ],
+    "tags": [
+      "work",
+      "study"
     ]
   },
   {
@@ -554,7 +642,11 @@
       "Notice the newfound sense of space and release around your neck."
     ],
     "quick": false,
-    "relief": "calm"
+    "relief": "calm",
+    "tags": [
+      "calm",
+      "movement"
+    ]
   },
   {
     "id": "name-one-good-thing",
@@ -582,6 +674,10 @@
       "Sad",
       "Okay",
       "Anxious"
+    ],
+    "tags": [
+      "lift",
+      "reflection"
     ]
   },
   {
@@ -611,6 +707,10 @@
       "Stressed",
       "Sad",
       "Okay"
+    ],
+    "tags": [
+      "lift",
+      "movement"
     ]
   },
   {
@@ -639,6 +739,10 @@
       "Sad",
       "Okay",
       "Overwhelmed"
+    ],
+    "tags": [
+      "lift",
+      "audio"
     ]
   },
   {
@@ -668,6 +772,11 @@
       "Sad",
       "Okay",
       "Anxious"
+    ],
+    "tags": [
+      "lift",
+      "social",
+      "phone"
     ]
   },
   {
@@ -697,6 +806,10 @@
       "Overwhelmed",
       "Stressed",
       "Sad"
+    ],
+    "tags": [
+      "calm",
+      "grounding"
     ]
   },
   {
@@ -726,6 +839,10 @@
       "Overwhelmed",
       "Stressed",
       "Okay"
+    ],
+    "tags": [
+      "work",
+      "study"
     ]
   },
   {
@@ -753,6 +870,10 @@
       "Anxious",
       "Overwhelmed",
       "Stressed"
+    ],
+    "tags": [
+      "calm",
+      "reflection"
     ]
   },
   {
@@ -782,6 +903,10 @@
       "Overwhelmed",
       "Anxious",
       "Stressed"
+    ],
+    "tags": [
+      "work",
+      "study"
     ]
   },
   {
@@ -813,6 +938,11 @@
       "Stressed",
       "Anxious",
       "Overwhelmed"
+    ],
+    "tags": [
+      "calm",
+      "conflict",
+      "reflection"
     ]
   },
   {
@@ -843,6 +973,11 @@
       "Stressed",
       "Overwhelmed",
       "Anxious"
+    ],
+    "tags": [
+      "work",
+      "study",
+      "teamwork"
     ]
   },
   {
@@ -874,6 +1009,11 @@
       "Stressed",
       "Anxious",
       "Overwhelmed"
+    ],
+    "tags": [
+      "work",
+      "study",
+      "teamwork"
     ]
   },
   {
@@ -905,6 +1045,11 @@
       "Anxious",
       "Stressed",
       "Overwhelmed"
+    ],
+    "tags": [
+      "calm",
+      "conflict",
+      "communication"
     ]
   },
   {
@@ -936,6 +1081,11 @@
       "Anxious",
       "Stressed",
       "Sad"
+    ],
+    "tags": [
+      "calm",
+      "conflict",
+      "reflection"
     ]
   },
   {
@@ -966,6 +1116,10 @@
       "Stressed",
       "Overwhelmed",
       "Anxious"
+    ],
+    "tags": [
+      "work",
+      "study"
     ]
   }
 ]

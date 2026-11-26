@@ -53,6 +53,7 @@ function createPlanRecommendationResult(
     situation_by: plan.situation_by || plan.later.by,
     relevant_themes: plan.relevant_themes || [],
     has_note,
+    note_interpreted: Boolean(plan.note_interpreted),
     suggestions: getFallbackSuggestions(mood, plan.relevant_themes || []),
     suggestions_by: 'rules' as const,
   }) as RecommendationResult & Recommendation[];
@@ -76,12 +77,13 @@ export async function recommend(
   const completionCounts = getActivityCompletionCounts(userId);
   const detectedThemes = detectThemes(note);
 
+  // Score without themes for unbiased AI pools (buildPools uses mood_fit, quick/relief, feedback & constraints only)
   const scored = scoreCandidates(mood, latestFeedback, recentSessions, {
-    detectedThemes,
-    note,
+    detectedThemes: [],
+    note: undefined,
   });
 
-  const pools = buildPools(mood, detectedThemes, scored, latestFeedback, constraints);
+  const pools = buildPools(mood, [], scored, latestFeedback, constraints);
 
   // 1. Safety check guard: NEVER call Gemini if safety trigger is present
   if (note && checkSafety(note).triggered) {

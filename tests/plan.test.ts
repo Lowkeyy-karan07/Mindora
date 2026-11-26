@@ -101,6 +101,19 @@ describe('Ordered Plan: Pools, Coverage, Validation, Teamwork & Feedback', () =>
       expect(impossible.next_pool.length).toBeGreaterThanOrEqual(2);
     });
 
+    it('ignores themes completely in buildPools (pools depend on mood_fit, quick/relief, feedback, and constraints only)', () => {
+      for (const mood of MOODS) {
+        const noThemes = buildPools(mood, []);
+        const examThemes = buildPools(mood, ['academics', 'work']);
+        const sleepThemes = buildPools(mood, ['sleep', 'conflict']);
+
+        expect(examThemes.now_pool.map((a) => a.id)).toEqual(noThemes.now_pool.map((a) => a.id));
+        expect(sleepThemes.now_pool.map((a) => a.id)).toEqual(noThemes.now_pool.map((a) => a.id));
+        expect(examThemes.next_pool.map((a) => a.id)).toEqual(noThemes.next_pool.map((a) => a.id));
+        expect(sleepThemes.next_pool.map((a) => a.id)).toEqual(noThemes.next_pool.map((a) => a.id));
+      }
+    });
+
     it('is deterministic across repeated calls with identical inputs', () => {
       const p1 = buildPools('Stressed', ['teamwork', 'work'], undefined, { 'box-breathing': 'yes' });
       const p2 = buildPools('Stressed', ['teamwork', 'work'], undefined, { 'box-breathing': 'yes' });
@@ -109,55 +122,42 @@ describe('Ordered Plan: Pools, Coverage, Validation, Teamwork & Feedback', () =>
     });
   });
 
-  describe('2. Teamwork & Conflict interpersonal stress support', () => {
-    it('detects teamwork keywords case-insensitively with whole phrases', () => {
+  describe('2. Honest Rules Mode high-confidence situations vs unmatched notes', () => {
+    it('detects teamwork keywords as informational hints without gating pools', () => {
       expect(detectThemes('My TEAMMATE is not contributing to our group project')).toContain('teamwork');
-      expect(detectThemes('A team member keeps doing all the work excuse while free rider hides')).toContain('teamwork');
-      expect(detectThemes('Manager keeps adding unfair workload and blame')).toContain('teamwork');
       expect(detectThemes('Huge argument and fight where I felt disrespected and ignored')).toContain('conflict');
     });
 
-    it('"my teammate is not contributing to our project" with Stressed detects teamwork, keeps now quick/calm, and surfaces teamwork activity first in Next', () => {
-      const note = 'my teammate is not contributing to our project';
-      const themes = detectThemes(note);
-      expect(themes).toContain('teamwork');
+    it('"argued with my dad tonight" with Sad matches high-confidence conflict in Honest Rules Mode', () => {
+      const note = 'argued with my dad tonight';
+      const pools = buildPools('Sad', []);
+      const plan = buildRulesPlan('Sad', [], note, pools);
 
-      const pools = buildPools('Stressed', themes);
-      const plan = buildRulesPlan('Stressed', themes, note, pools);
-
-      // Right now stays quick and calming
       expect(isQuickActivity(plan.now.activity)).toBe(true);
-      expect(matchesMoodGoal(plan.now.activity, 'Stressed')).toBe(true);
-
-      // First Next item is a practical teamwork activity
-      expect(plan.next[0].activity.target_themes).toContain('teamwork');
-      expect(['journaling', 'break']).toContain(plan.next[0].activity.type);
-
-      // Fallback templates are teamwork-specific, not generic ones
-      expect(plan.acknowledgement.toLowerCase()).toMatch(/team|group|contributions/);
-      expect(plan.situation.what_is_in_your_control.toLowerCase()).not.toContain(
-        'add a little more detail in your note'
-      );
+      expect(matchesMoodGoal(plan.now.activity, 'Sad')).toBe(true);
+      expect(plan.note_interpreted).toBe(true);
+      expect(plan.acknowledgement.toLowerCase()).toMatch(/disagreement|conflict|hurt|conversation/);
+      expect(plan.acknowledgement).not.toContain('Turn on AI mode');
     });
   });
 
   describe('3. Situation coverage across 12+ diverse notes (AI-off)', () => {
     const situations: Array<{ label: string; mood: Mood; note: string; unrecognised?: boolean }> = [
-      { label: 'study', mood: 'Anxious', note: 'Not performing well in academics, exams are next week' },
-      { label: 'work', mood: 'Stressed', note: 'My boss added two urgent reports to my workload today' },
-      { label: 'teammate conflict', mood: 'Stressed', note: 'My teammate is not contributing to our group project' },
-      { label: 'family argument', mood: 'Sad', note: 'Had an intense argument and fight with my family last night' },
+      { label: 'exam', mood: 'Anxious', note: 'Not performing well in academics, exams are next week' },
+      { label: 'unmatched work', mood: 'Stressed', note: 'My boss added two urgent reports to my workload today', unrecognised: true },
+      { label: 'unmatched teammate', mood: 'Stressed', note: 'My teammate is not contributing to our group project', unrecognised: true },
+      { label: 'conflict', mood: 'Sad', note: 'Had an intense argument and fight with my family last night' },
       { label: 'sleep', mood: 'Overwhelmed', note: 'Insomnia again, I cannot sleep and feel exhausted' },
       { label: 'loneliness', mood: 'Sad', note: 'Feel completely lonely and isolated since moving here' },
       { label: 'money', mood: 'Anxious', note: 'Rent and monthly bills are piling up and money is tight' },
-      { label: 'health worry', mood: 'Anxious', note: 'Nervous waiting for medical test results from the doctor' },
+      { label: 'romance', mood: 'Sad', note: 'Painful breakup with my girlfriend yesterday' },
       { label: 'long commute', mood: 'Stressed', note: 'Stuck in brutal traffic on a two-hour commute every morning', unrecognised: true },
       { label: 'bad day no reason', mood: 'Sad', note: 'Everything feels heavy and grey today without a clear reason', unrecognised: true },
       { label: 'empty note', mood: 'Okay', note: '' },
-      { label: 'very short note', mood: 'Overwhelmed', note: 'tired' },
+      { label: 'very short note', mood: 'Overwhelmed', note: 'tired', unrecognised: true },
     ];
 
-    it('produces complete, duplicate-free plans for all 12 scenarios and shows honest "Add a little more detail" for unrecognised notes', async () => {
+    it('produces complete, duplicate-free plans for all 12 scenarios and shows honest "Turn on AI mode" line for unrecognised notes', async () => {
       for (const s of situations) {
         const res = await recommend(s.mood, s.note);
         const plan = res.plan!;
@@ -180,8 +180,12 @@ describe('Ordered Plan: Pools, Coverage, Validation, Teamwork & Feedback', () =>
         expect(matchesMoodGoal(plan.now.activity, s.mood)).toBe(true);
 
         if (s.unrecognised) {
+          expect(plan.note_interpreted).toBe(false);
+          expect(plan.acknowledgement).toContain(
+            'Turn on AI mode to get suggestions based on your note.'
+          );
           expect(plan.situation.what_is_in_your_control).toContain(
-            'Add a little more detail in your note and the plan can be more specific'
+            'Turn on AI mode to get suggestions based on your note.'
           );
         }
       }
